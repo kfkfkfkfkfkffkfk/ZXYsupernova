@@ -27,7 +27,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             --sidebar-width: 320px;
         }
 
-        /* Force landscape on phone-sized devices for the call experience */
         @media only screen and (max-width: 500px) and (orientation: portrait) {
             body::before {
                 content: "Please rotate your device to landscape mode to use the call.";
@@ -58,7 +57,8 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             flex-grow: 1; position: relative; background: #111;
             display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 10px; padding: 10px; overflow: hidden;
-            margin-bottom: 80px;
+            /* CHANGE: reduced bottom margin so toolbar is smaller/less intrusive */
+            margin-bottom: 60px;
             transition: margin-right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -85,21 +85,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             height: 100%;
         }
 
-        /* Toolbar shifts left when sidebar is open */
-        .toolbar {
-            position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 10px;
-            background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); 
-            padding: 10px 20px; border-radius: 30px; z-index: 3000; align-items: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            max-width: 90vw; overflow-x: auto;
-            transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* When chat is open, shift toolbar left by half the sidebar width so it stays centered in the remaining space */
         body.chat-open .toolbar {
             left: calc(50% - var(--sidebar-width) / 2);
         }
@@ -137,15 +122,39 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             touch-action: none;
             will-change: transform;
             transform: translate3d(20px, 20px, 0);
-            /* Much lower friction for easier sliding */
         }
         #local-container:active { cursor: grabbing; }
         #local-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
-        .remote-video { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; background: #222; }
+        
+        /* CHANGE: video tiles now have a colored border ring */
+        .remote-video-wrapper {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .remote-video { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; background: #222; display: block; }
+        /* The border is applied as a box-shadow so it sits outside and doesn't clip the video */
+        .remote-video-wrapper.has-color {
+            box-shadow: 0 0 0 4px var(--peer-color, #fff);
+        }
 
         #messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 25px; background: #fff; }
         
-        .id-system-msg { align-self: center; font-size: 13px; font-weight: 600; color: white; margin: 15px 0; background: var(--accent); padding: 8px 20px; border-radius: 20px; }
+        /* CHANGE: ID system msg forced onto one line */
+        .id-system-msg {
+            align-self: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            margin: 15px 0;
+            background: var(--accent);
+            padding: 8px 20px;
+            border-radius: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 95%;
+        }
         
         .msg-wrapper { display: flex; flex-direction: column; max-width: 85%; position: relative; }
         .msg-wrapper.me { align-self: flex-end; align-items: flex-end; }
@@ -156,9 +165,9 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
         .msg-bubble { padding: 10px 14px; border-radius: 18px; font-size: 16px; line-height: 1.4; word-wrap: break-word; min-width: 30px; }
         .me .msg-bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
-        .them .msg-bubble { background: var(--bubble-them); color: black; border-bottom-left-radius: 4px; }
-        
-        /* Emoji reaction actions — anchored BELOW the bubble, no upward jump */
+        /* CHANGE: "them" bubbles use the sender's peer color */
+        .them .msg-bubble { background: var(--peer-color, var(--bubble-them)); color: white; border-bottom-left-radius: 4px; }
+
         .msg-actions {
             display: inline-flex;
             align-items: center;
@@ -169,11 +178,9 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             box-shadow: 0 2px 10px rgba(0,0,0,0.12);
             position: relative;
             flex-shrink: 0;
-            /* IMPORTANT: no transform or margin that would shift the element on open */
             align-self: flex-start;
         }
 
-        /* Emoji trigger — bigger and clickable to react itself */
         .emoji-trigger {
             font-size: 20px;
             cursor: pointer;
@@ -185,7 +192,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             line-height: 1;
         }
 
-        /* Tray expands horizontally, anchored at trigger position — no vertical shift */
         .emoji-tray {
             display: inline-flex;
             align-items: center;
@@ -197,7 +203,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             opacity: 0;
             white-space: nowrap;
             pointer-events: none;
-            /* No padding change — prevents vertical shift */
         }
 
         .emoji-tray.open {
@@ -231,9 +236,59 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
         .msg-meta { font-size: 10px; color: #8e8e93; margin-top: 4px; display: flex; gap: 5px; align-items: center; }
 
+        /* CHANGE: reaction display — big emoji overlay on the video tile */
+        .reaction-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 80px;
+            z-index: 10;
+            pointer-events: none;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+            opacity: 0;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            line-height: 1;
+        }
+        .reaction-overlay.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+        .reaction-overlay.hide {
+            transform: translate(-50%, -50%) scale(1.3);
+            opacity: 0;
+        }
+
+        /* CHANGE: reaction shown in the chat meta area also big */
+        .msg-reaction-badge {
+            font-size: 28px;
+            line-height: 1;
+            display: inline-block;
+            animation: reactionPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes reactionPop {
+            from { transform: scale(0); }
+            to   { transform: scale(1); }
+        }
+
         .toolbar input { border: 1px solid #ccc; border-radius: 15px; padding: 5px 12px; width: 100px; outline: none; }
         
-        button { border: none; color: white; padding: 8px 16px; border-radius: 18px; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
+        /* CHANGE: toolbar is smaller — less padding, smaller font, tighter gaps */
+        .toolbar {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 6px;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); 
+            padding: 6px 14px; border-radius: 26px; z-index: 3000; align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-width: 90vw; overflow-x: auto;
+            transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        button { border: none; color: white; padding: 5px 12px; border-radius: 16px; font-weight: 600; cursor: pointer; font-size: 0.72rem; }
         .btn-blue { background: var(--accent); }
         .btn-red { background: var(--danger); }
         .btn-green { background: var(--success); }
@@ -246,7 +301,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         }
         #custom-modal { background: white; padding: 25px; border-radius: 20px; width: 320px; text-align: center; }
 
-        /* Chat input — prevent overflow into sidebar edge, always show send button */
         .chat-input-area {
             padding: 10px 12px;
             background: #fff;
@@ -279,41 +333,16 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         .modal-field-container label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; margin-left: 5px; }
         .modal-field-container input { width: 93%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-top: 4px; }
 
-        #joining-banner {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: white;
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 14px;
-            z-index: 5000;
-            box-shadow: 0 4px 20px rgba(0,122,255,0.4);
-            display: none;
-            animation: fadeInDown 0.4s ease;
-        }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-
-        /* iPhone landscape layout tweaks */
         @media only screen and (max-height: 430px) and (orientation: landscape) {
             #local-container { width: 140px; }
-            .toolbar { padding: 6px 12px; gap: 6px; bottom: 10px; }
+            .toolbar { padding: 4px 10px; gap: 5px; bottom: 6px; }
             .toolbar input { width: 80px; }
-            button { padding: 6px 12px; font-size: 0.75rem; }
-            #main-stage { margin-bottom: 60px; }
+            button { padding: 4px 10px; font-size: 0.68rem; }
+            #main-stage { margin-bottom: 48px; }
         }
     </style>
 </head>
 <body>
-
-<div id="joining-banner">🔗 Joining call from invite link…</div>
 
 <div id="custom-modal-overlay">
     <div id="custom-modal">
@@ -344,7 +373,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 <div class="toolbar">
     <input type="text" id="friend-id-input" placeholder="Enter ID">
     <button class="btn-blue" onclick="joinCall()">Connect</button>
-    <button class="btn-green" style="width:35px; border-radius:50%; padding:8px 0;" onclick="addNewPeer()">+</button>
+    <button class="btn-green" style="width:28px; border-radius:50%; padding:5px 0;" onclick="addNewPeer()">+</button>
     <button id="btn-mute" class="btn-red" onclick="toggleMute()">Mute</button>
     <button id="btn-video" class="btn-gray" onclick="toggleVideo()">Stop Video</button>
     <button id="btn-screen" class="btn-blue" onclick="toggleScreen()">Share Screen</button>
@@ -375,6 +404,23 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     const resizer = document.getElementById('resizer');
     const restoreBtn = document.getElementById('restore-chat');
     const localBox = document.getElementById('local-container');
+
+    // CHANGE: peer color palette — each remote peer gets a unique color
+    const PEER_COLORS = [
+        '#ff6b35', '#9b59b6', '#e74c3c', '#27ae60',
+        '#f39c12', '#1abc9c', '#e91e63', '#2196f3',
+        '#ff5722', '#8bc34a'
+    ];
+    const peerColorMap = {}; // peerId -> color hex
+    let peerColorIndex = 0;
+
+    function getPeerColor(peerId) {
+        if (!peerColorMap[peerId]) {
+            peerColorMap[peerId] = PEER_COLORS[peerColorIndex % PEER_COLORS.length];
+            peerColorIndex++;
+        }
+        return peerColorMap[peerId];
+    }
 
     let currentX = 20, currentY = 20;
     let initialX, initialY;
@@ -420,7 +466,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         if (!activeDragging) return;
         activeDragging = false;
         initialX = currentX; initialY = currentY;
-        // Much lower friction = slides much more easily / farther
         let friction = 0.985;
         function smoothInertiaGlide() {
             if (Math.abs(velocityX) < 0.005 && Math.abs(velocityY) < 0.005) { cancelAnimationFrame(inertiaFrameId); return; }
@@ -499,10 +544,8 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         }
     }
 
-    // ─── Emoji tray: no layout-shift expansion, closes when cursor is not near the whole row ───
     let openTray = null;
     let collapseTimer = null;
-    const CLOSE_DISTANCE = 35; // px away from the whole msg-actions element before closing
 
     function openEmojiTray(tray, msgActionsEl) {
         if (openTray && openTray !== tray) closeEmojiTray(openTray);
@@ -520,7 +563,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
     function scheduleClose(tray) {
         clearTimeout(collapseTimer);
-        // Wider grace period so user can reach far emojis without losing the tray
         collapseTimer = setTimeout(() => closeEmojiTray(tray), 300);
     }
 
@@ -541,33 +583,80 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
     peer.on('open', id => {
         myId = id;
+        // CHANGE: single-line ID message
         const msg = document.createElement('div');
         msg.className = 'id-system-msg';
         msg.innerText = `Your ID: ${id}`;
         document.getElementById('messages').appendChild(msg);
-        const hashId = window.location.hash.substring(1).trim();
-        if (hashId && hashId !== id) {
-            const banner = document.getElementById('joining-banner');
-            banner.style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('friend-id-input').value = hashId;
-                joinCall();
-                history.replaceState(null, '', window.location.pathname + window.location.search);
-                setTimeout(() => { banner.style.display = 'none'; }, 3000);
-            }, 800);
-        }
+
+        // CHANGE: removed the joining-banner / auto-connect from hash link block entirely
     });
 
     peer.on('call', call => { call.answer(myStream); handleCall(call); });
     peer.on('connection', conn => setupChat(conn));
 
-    function appendMessage(text, side) {
+    // CHANGE: show big emoji reaction on a peer's video tile
+    function showReactionOnTile(peerId, emoji) {
+        const wrapperId = `wrapper-${peerId}`;
+        let wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return;
+        let overlay = wrapper.querySelector('.reaction-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'reaction-overlay';
+            wrapper.appendChild(overlay);
+        }
+        overlay.innerText = emoji;
+        overlay.classList.remove('show', 'hide');
+        // Force reflow
+        void overlay.offsetWidth;
+        overlay.classList.add('show');
+        clearTimeout(overlay._timer1);
+        clearTimeout(overlay._timer2);
+        overlay._timer1 = setTimeout(() => {
+            overlay.classList.remove('show');
+            overlay.classList.add('hide');
+        }, 2200);
+        overlay._timer2 = setTimeout(() => {
+            overlay.classList.remove('hide');
+        }, 2800);
+    }
+
+    // CHANGE: show big emoji on MY local tile
+    function showReactionOnLocal(emoji) {
+        let overlay = localBox.querySelector('.reaction-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'reaction-overlay';
+            localBox.appendChild(overlay);
+        }
+        overlay.innerText = emoji;
+        overlay.classList.remove('show', 'hide');
+        void overlay.offsetWidth;
+        overlay.classList.add('show');
+        clearTimeout(overlay._timer1);
+        clearTimeout(overlay._timer2);
+        overlay._timer1 = setTimeout(() => {
+            overlay.classList.remove('show');
+            overlay.classList.add('hide');
+        }, 2200);
+        overlay._timer2 = setTimeout(() => {
+            overlay.classList.remove('hide');
+        }, 2800);
+    }
+
+    function appendMessage(text, side, peerId) {
         const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2,5);
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const wrapper = document.createElement('div');
         wrapper.className = `msg-wrapper ${side}`;
 
-        // The trigger emoji is itself clickable to react
+        // CHANGE: apply peer color to "them" bubbles
+        if (side === 'them' && peerId) {
+            const color = getPeerColor(peerId);
+            wrapper.style.setProperty('--peer-color', color);
+        }
+
         const triggerEmoji = '😊';
         const emojiList = ['😭','⏰','📚','🌐','📆','🤔','😈','😂','👏','🖐','🎉','💧','🔮','😀','😆','👋','🧻','🔥','✨','🚀','💯'];
         const emojiButtons = emojiList.map(e =>
@@ -585,7 +674,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
                     </div>
                 </div>
             </div>
-            <div class="msg-meta"><span>${time}</span> <span id="re-${msgId}"></span></div>
+            <div class="msg-meta"><span>${time}</span> <span id="re-${msgId}" class="msg-reaction-badge" style="display:none;"></span></div>
         `;
 
         const msgActionsEl = wrapper.querySelector('.msg-actions');
@@ -593,12 +682,10 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         const trigger = wrapper.querySelector('.emoji-trigger');
         const copyBtn = wrapper.querySelector('.util-btns .action-btn');
 
-        // Trigger: hover opens tray, click reacts with trigger emoji
         trigger.addEventListener('click', () => {
-            reactTo(msgId, triggerEmoji);
+            reactTo(msgId, triggerEmoji, side);
         });
 
-        // Mouse tracking: only close if cursor leaves the entire msg-actions block (with grace distance)
         msgActionsEl.addEventListener('mouseenter', () => {
             clearTimeout(collapseTimer);
             openEmojiTray(tray, msgActionsEl);
@@ -608,13 +695,12 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             scheduleClose(tray);
         });
 
-        // Keep open while moving within the tray itself
         tray.addEventListener('mouseenter', () => clearTimeout(collapseTimer));
         tray.addEventListener('mouseleave', () => scheduleClose(tray));
 
         tray.querySelectorAll('.action-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                reactTo(msgId, btn.dataset.emoji);
+                reactTo(msgId, btn.dataset.emoji, side);
                 clearTimeout(collapseTimer);
                 closeEmojiTray(tray);
             });
@@ -628,16 +714,30 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
     }
 
-    function reactTo(id, emoji) {
+    // CHANGE: reactTo now also shows big emoji on local tile AND broadcasts to peers
+    function reactTo(id, emoji, side) {
         const el = document.getElementById('re-' + id);
-        if (el) { el.innerText = emoji; Object.values(connections).forEach(c => c.send({ type: 'react', id, emoji })); }
+        if (el) {
+            el.innerText = emoji;
+            el.style.display = 'inline-block';
+            el.classList.remove('reactionPop');
+            void el.offsetWidth;
+            el.classList.add('reactionPop');
+        }
+        // Show on local tile
+        showReactionOnLocal(emoji);
+        // Broadcast to all peers: type 'react' (existing) + type 'react_tile' (new — shows on their tile of us)
+        Object.values(connections).forEach(c => {
+            c.send({ type: 'react', id, emoji });
+            c.send({ type: 'react_tile', emoji, fromSelf: true });
+        });
     }
 
     function sendChatMessage() {
         const text = document.getElementById('chat-msg').value.trim();
         if (!text) return;
         Object.values(connections).forEach(c => c.send({ type: 'chat', text }));
-        appendMessage(text, 'me');
+        appendMessage(text, 'me', null);
         document.getElementById('chat-msg').value = "";
     }
 
@@ -652,20 +752,40 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         calls[call.peer] = call;
         call.on('stream', stream => {
             if (document.getElementById(`v-${call.peer}`)) return;
+            const color = getPeerColor(call.peer);
+            // CHANGE: wrap video in a wrapper with colored border
+            const wrapper = document.createElement('div');
+            wrapper.id = `wrapper-${call.peer}`;
+            wrapper.className = 'remote-video-wrapper has-color';
+            wrapper.style.setProperty('--peer-color', color);
+
             const v = document.createElement('video');
             v.id = `v-${call.peer}`; v.className = 'remote-video';
             v.srcObject = stream; v.autoplay = true; v.playsInline = true;
-            document.getElementById('main-stage').appendChild(v);
+            wrapper.appendChild(v);
+            document.getElementById('main-stage').appendChild(wrapper);
         });
     }
 
     function setupChat(conn) {
         connections[conn.peer] = conn;
         conn.on('data', data => {
-            if (data.type === 'chat') appendMessage(data.text, 'them');
+            if (data.type === 'chat') appendMessage(data.text, 'them', conn.peer);
             if (data.type === 'react') {
                 const r = document.getElementById('re-' + data.id);
-                if (r) r.innerText = data.emoji;
+                if (r) {
+                    r.innerText = data.emoji;
+                    r.style.display = 'inline-block';
+                    r.classList.remove('reactionPop');
+                    void r.offsetWidth;
+                    r.classList.add('reactionPop');
+                }
+                // CHANGE: also show big emoji on that peer's video tile
+                showReactionOnTile(conn.peer, data.emoji);
+            }
+            // CHANGE: react_tile — show big emoji on the peer who sent it (their tile)
+            if (data.type === 'react_tile') {
+                showReactionOnTile(conn.peer, data.emoji);
             }
         });
     }
@@ -701,7 +821,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
                 document.getElementById('local-video').srcObject = myStream;
             }
         } else {
-            // Always use getDisplayMedia for screen share — no camera fallback on iOS/iPad
             if (!navigator.mediaDevices.getDisplayMedia) {
                 alert("Screen sharing is not supported on this device/browser.");
                 return;
