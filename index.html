@@ -21,45 +21,37 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             --text: #1c1c1e;
             --danger: #ff3b30;
             --success: #34c759;
-            --bubble-them: #e5e5ea;
             --sidebar-width: 320px;
             --toolbar-height: 80px;
         }
 
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #000; color: var(--text); overflow: hidden;
         }
 
-        /* ── PORTRAIT PHONE ── */
         @media only screen and (max-width: 600px) and (orientation: portrait) {
             body { display: flex; flex-direction: row; }
-            #main-stage { flex: 1; margin-bottom: 0; margin-right: 0; width: calc(100% - 36px); }
+            #main-stage { flex: 1; margin-bottom: 0; width: calc(100% - 36px); }
             .toolbar { display: none !important; }
             #vertical-toolbar { display: flex !important; }
-            #chat-sidebar {
-                position: fixed; right: 36px; top: 0; bottom: 0; z-index: 200;
-                width: var(--sidebar-width); max-width: calc(100vw - 36px);
-            }
+            #chat-sidebar { position: fixed; right: 36px; top: 0; bottom: 0; z-index: 200; width: var(--sidebar-width); max-width: calc(100vw - 36px); }
             #chat-sidebar.hidden { transform: translateX(calc(100% + 36px)); }
+            #pip-container { right: 42px; }
         }
-
         @media not all and (max-width: 600px) and (orientation: portrait) {
             body { display: flex; flex-direction: row; }
             #vertical-toolbar { display: none !important; }
         }
 
-        /* ─── MAIN STAGE ─── */
         #main-stage {
             flex-grow: 1; position: relative; background: #111;
             display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 10px; padding: 10px; overflow: hidden;
             margin-bottom: var(--toolbar-height);
-            transition: margin-right 0.35s cubic-bezier(0.4,0,0.2,1);
         }
 
-        /* ─── BOTTOM TOOLBAR ─── */
         .toolbar {
             position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
             display: flex; gap: 5px;
@@ -73,7 +65,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         .toolbar button { padding: 5px 10px; font-size: 0.71rem; border-radius: 13px; }
         .toolbar input { border: 1px solid #ccc; border-radius: 12px; padding: 4px 9px; width: 82px; outline: none; font-size: 0.71rem; }
 
-        /* ─── VERTICAL TOOLBAR ─── */
         #vertical-toolbar {
             display: none; flex-direction: column; align-items: center; gap: 4px;
             background: rgba(255,255,255,0.92); backdrop-filter: blur(15px);
@@ -96,7 +87,128 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         .vt-btn.btn-green { background: var(--success); }
         .vt-btn.btn-gray  { background: #555; }
 
-        /* ─── CHAT SIDEBAR ─── */
+        /* ══ PIP CONTAINER — Zoom/Meet style floating panel ══ */
+        #pip-container {
+            position: fixed;
+            bottom: 100px;
+            right: 18px;
+            z-index: 2500;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0;
+            pointer-events: none;
+            width: 160px;
+        }
+
+        /* ══ PIP PANEL — the whole floating box ══ */
+        #pip-panel {
+            background: #1a1a1a;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08);
+            pointer-events: all;
+            width: 160px;
+            min-height: 90px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            cursor: grab;
+            user-select: none;
+        }
+        #pip-panel:active { cursor: grabbing; }
+
+        /* ══ PIP HEADER ══ */
+        #pip-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px 4px;
+            background: rgba(0,0,0,0.6);
+            flex-shrink: 0;
+        }
+        #pip-header span {
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        #pip-toggle-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #pip-toggle-btn:hover { background: rgba(255,255,255,0.25); }
+
+        /* ══ PIP THUMBNAILS ══ */
+        #pip-thumbs {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 4px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .pip-thumb {
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #222;
+            position: relative;
+            flex-shrink: 0;
+            border: 2px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+        .pip-thumb:hover { border-color: rgba(255,255,255,0.3); }
+        .pip-thumb video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        #pip-local video { transform: scaleX(-1); } /* mirror self */
+        .pip-label {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 4px 0 5px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.75));
+            text-align: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.95);
+            letter-spacing: 0.03em;
+            pointer-events: none;
+        }
+        .pip-thumb .pip-active-dot {
+            position: absolute;
+            top: 5px; right: 5px;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #34c759;
+            box-shadow: 0 0 4px rgba(52,199,89,0.8);
+        }
+
+        /* PIP collapsed state */
+        #pip-panel.collapsed #pip-thumbs { display: none; }
+        #pip-panel.collapsed {
+            width: 50px;
+            min-height: 0;
+            border-radius: 25px;
+        }
+        #pip-panel.collapsed #pip-header {
+            padding: 10px 8px;
+            justify-content: center;
+        }
+        #pip-panel.collapsed #pip-header span { display: none; }
+
         #chat-sidebar {
             width: var(--sidebar-width); background: var(--bg); display: flex; flex-direction: column;
             border-left: 1px solid #d1d1d6; position: relative; z-index: 101;
@@ -111,21 +223,19 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; color: white; cursor: pointer; font-weight: bold;
         }
 
-        /* ─── LOCAL VIDEO ─── */
-        #local-container {
-            position: absolute; top: 0; left: 0; width: 220px; aspect-ratio: 16/9;
-            border-radius: 12px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-            z-index: 2000; cursor: grab; background: #000; border: 3px solid #007aff;
-            touch-action: none; will-change: transform; transform: translate3d(20px, 20px, 0);
+        /* Chat notification badge */
+        #chat-notif-badge {
+            display: none;
+            position: fixed; right: 76px; top: 16px; z-index: 3002;
+            background: var(--danger); color: white; border-radius: 50%;
+            width: 20px; height: 20px; font-size: 11px; font-weight: 700;
+            align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(255,59,48,0.5);
         }
-        #local-container:active { cursor: grabbing; }
-        #local-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
 
-        /* ─── REMOTE VIDEO ─── */
-        .remote-video-wrapper { position: relative; border-radius: 14px; overflow: hidden; }
+        .remote-video-wrapper { position: relative; border-radius: 14px; overflow: hidden; min-height: 160px; }
         .remote-video { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; background: #222; display: block; }
 
-        /* ─── EMPTY STATE ─── */
         #empty-state {
             position: absolute; inset: 0; display: flex; flex-direction: column;
             align-items: center; justify-content: center; gap: 16px; color: #888;
@@ -134,17 +244,13 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         #empty-state .empty-icon { font-size: 64px; opacity: 0.3; }
         #empty-state p { font-size: 15px; opacity: 0.5; margin: 0; text-align: center; padding: 0 20px; }
 
-        /* ─── CHAT MESSAGES ─── */
         #messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 25px; background: #fff; }
         .id-system-msg {
             align-self: center; font-size: 13px; font-weight: 600; color: white; margin: 15px 0;
             background: var(--accent); padding: 8px 20px; border-radius: 20px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95%;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95%; cursor: pointer;
         }
-        .sys-msg {
-            align-self: center; font-size: 12px; color: #888; background: #f0f0f5;
-            padding: 6px 16px; border-radius: 12px; margin: 4px 0; text-align: center;
-        }
+        .sys-msg { align-self: center; font-size: 12px; color: #888; background: #f0f0f5; padding: 6px 16px; border-radius: 12px; margin: 4px 0; text-align: center; }
         .msg-wrapper { display: flex; flex-direction: column; max-width: 85%; position: relative; }
         .msg-wrapper.me { align-self: flex-end; align-items: flex-end; }
         .msg-wrapper.them { align-self: flex-start; align-items: flex-start; }
@@ -153,19 +259,9 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         .msg-bubble { padding: 10px 14px; border-radius: 18px; font-size: 16px; line-height: 1.4; word-wrap: break-word; min-width: 30px; color: white; }
         .me .msg-bubble { border-bottom-right-radius: 4px; }
         .them .msg-bubble { border-bottom-left-radius: 4px; }
-
-        /* ─── EMOJI TRAY ─── */
-        .msg-actions {
-            display: inline-flex; align-items: center; background: rgba(255,255,255,0.97);
-            border: 1px solid #ddd; border-radius: 20px; padding: 4px 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.12); position: relative; flex-shrink: 0; align-self: flex-start;
-        }
+        .msg-actions { display: inline-flex; align-items: center; background: rgba(255,255,255,0.97); border: 1px solid #ddd; border-radius: 20px; padding: 4px 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); position: relative; flex-shrink: 0; align-self: flex-start; }
         .emoji-trigger { font-size: 20px; cursor: pointer; padding: 3px; display: inline-flex; align-items: center; user-select: none; flex-shrink: 0; line-height: 1; }
-        .emoji-tray {
-            display: inline-flex; align-items: center; max-width: 0; overflow: hidden;
-            transition: max-width 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
-            opacity: 0; white-space: nowrap; pointer-events: none;
-        }
+        .emoji-tray { display: inline-flex; align-items: center; max-width: 0; overflow: hidden; transition: max-width 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease; opacity: 0; white-space: nowrap; pointer-events: none; }
         .emoji-tray.open { max-width: 1400px; opacity: 1; pointer-events: all; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 22px; padding: 3px 4px; color: #333; transition: transform 0.15s ease; line-height: 1; display: inline-flex; align-items: center; }
         .action-btn:hover { transform: scale(1.4); }
@@ -173,7 +269,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         .msg-meta { font-size: 10px; color: #8e8e93; margin-top: 4px; display: flex; gap: 5px; align-items: center; }
         .reaction-badge { font-size: 28px; line-height: 1; }
 
-        /* ─── BIG FLOATING REACTION ─── */
         .big-reaction-popup { position: fixed; font-size: 72px; z-index: 9999; pointer-events: none; animation: bigReactPop 1.8s ease forwards; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35)); }
         @keyframes bigReactPop {
             0%   { transform: scale(0.3) translateY(0); opacity: 1; }
@@ -182,14 +277,12 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             100% { transform: scale(0.8) translateY(-120px); opacity: 0; }
         }
 
-        /* ─── BUTTONS ─── */
         button { border: none; color: white; padding: 8px 16px; border-radius: 18px; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
         .btn-blue  { background: var(--accent); }
         .btn-red   { background: var(--danger); }
         .btn-green { background: var(--success); }
         .btn-gray  { background: #444; }
 
-        /* ─── TOAST ─── */
         #toast {
             position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
             background: rgba(0,0,0,0.85); color: white; padding: 10px 22px; border-radius: 20px;
@@ -198,24 +291,133 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* ─── MODAL ─── */
+        /* ══ CHAT NOTIFICATION POPUP ══ */
+        #chat-notif-popup {
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            z-index: 4600;
+            background: rgba(28,28,30,0.95);
+            backdrop-filter: blur(12px);
+            color: white;
+            border-radius: 16px;
+            padding: 12px 16px;
+            min-width: 220px;
+            max-width: 280px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            display: none;
+            animation: slideInLeft 0.3s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer;
+        }
+        @keyframes slideInLeft {
+            from { transform: translateX(-120%); opacity: 0; }
+            to   { transform: translateX(0); opacity: 1; }
+        }
+        #chat-notif-popup .notif-header {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+        #chat-notif-popup .notif-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #5ac8fa;
+            margin-bottom: 3px;
+        }
+        #chat-notif-popup .notif-text {
+            font-size: 14px;
+            line-height: 1.4;
+            color: rgba(255,255,255,0.9);
+        }
+        #chat-notif-popup .notif-tap {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 6px;
+        }
+
         #custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); display: none; justify-content: center;
             align-items: center; z-index: 4000; backdrop-filter: blur(4px);
         }
-        #custom-modal { background: white; padding: 25px; border-radius: 20px; width: 320px; text-align: center; max-width: 90vw; }
+        #custom-modal {
+            background: white; padding: 28px 26px; border-radius: 22px; width: 380px;
+            text-align: center; max-width: 92vw; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        #custom-modal h3 { margin: 0 0 8px; font-size: 20px; }
+        #custom-modal p  { margin: 0 0 6px; color: #555; font-size: 14px; line-height: 1.5; }
 
-        /* ─── CHAT INPUT ─── */
+        .modal-field { margin: 14px 0; text-align: left; }
+        .modal-field label { display: block; font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+        .modal-field input {
+            width: 100%; padding: 11px 14px; border: 1.5px solid #e0e0e0; border-radius: 12px;
+            outline: none; font-size: 15px; box-sizing: border-box; transition: border-color 0.2s;
+            font-family: inherit;
+        }
+        .modal-field input:focus { border-color: var(--accent); }
+
+        /* Invite link preview */
+        .invite-link-preview {
+            background: #f0f7ff;
+            border: 1.5px solid #cce0ff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-top: 12px;
+            text-align: left;
+        }
+        .invite-link-preview .ilp-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #007aff;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 5px;
+        }
+        .invite-link-preview .ilp-link {
+            font-size: 12px;
+            color: #333;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        .invite-link-preview .ilp-note {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Email template preview */
+        .email-preview {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 10px;
+            text-align: left;
+            font-size: 12px;
+            color: #555;
+            line-height: 1.5;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .email-note {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #795548;
+            margin-top: 8px;
+            text-align: left;
+            line-height: 1.5;
+        }
+
         .chat-input-area { padding: 10px 12px; background: #fff; display: flex; gap: 8px; border-top: 1px solid #d1d1d6; align-items: center; box-sizing: border-box; min-width: 0; }
         #chat-msg { flex: 1; min-width: 0; border: 1px solid #d1d1d6; border-radius: 20px; padding: 8px 12px; outline: none; font-size: 14px; box-sizing: border-box; }
         .chat-input-area button { flex-shrink: 0; white-space: nowrap; padding: 8px 14px; }
 
-        .modal-field-container { margin: 15px 0; text-align: left; }
-        .modal-field-container label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; margin-left: 5px; }
-        .modal-field-container input { width: 93%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-top: 4px; box-sizing: border-box; }
-
-        /* ─── JOIN LINK BANNER ─── */
         #join-banner {
             display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 4500;
             background: linear-gradient(135deg, #007aff, #5ac8fa);
@@ -225,47 +427,59 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         #join-banner button { background: white; color: #007aff; padding: 6px 18px; margin-left: 12px; font-size: 13px; }
         #join-banner .dismiss { background: transparent; color: rgba(255,255,255,0.7); font-size: 18px; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); padding: 4px 8px; }
 
-        /* ─── CONNECTION STATUS ─── */
-        .peer-label {
-            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.6); color: white; font-size: 11px; font-weight: 600;
-            padding: 3px 10px; border-radius: 10px; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
-        }
+        .peer-label { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 10px; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis; }
         .peer-connecting { display: flex; align-items: center; justify-content: center; background: #1a1a1a; color: #888; font-size: 13px; min-height: 160px; }
         .connecting-spinner { width: 28px; height: 28px; border: 3px solid #333; border-top-color: #007aff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Notification permission banner */
+        #notif-banner {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 4400;
+            background: #1c1c1e;
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        #notif-banner button {
+            background: var(--accent);
+            padding: 5px 16px;
+            margin-left: 12px;
+            font-size: 12px;
+            border-radius: 12px;
+        }
+        #notif-banner .nb-dismiss {
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            padding: 4px 8px;
+        }
     </style>
 </head>
 <body>
 
-<!-- Join-from-link banner -->
 <div id="join-banner">
     <span id="join-banner-text">Someone shared a call link with you.</span>
     <button class="btn-blue" onclick="joinFromBanner()">Join Now</button>
     <button class="dismiss" onclick="document.getElementById('join-banner').style.display='none'">✕</button>
 </div>
 
+<div id="notif-banner">
+    🔔 Enable notifications to get alerts when someone messages in chat.
+    <button onclick="requestNotifPerms()">Enable</button>
+    <button class="nb-dismiss" onclick="document.getElementById('notif-banner').style.display='none'">Not now</button>
+</div>
+
 <div id="custom-modal-overlay">
     <div id="custom-modal">
         <h3 id="modal-title"></h3>
         <p id="modal-desc"></p>
-        <div id="modal-fields-wrapper" style="display:none;">
-            <div class="modal-field-container" id="container-user-email">
-                <label>Your Name (Optional):</label>
-                <input type="text" id="modal-user-email" placeholder="Your Name">
-            </div>
-            <div class="modal-field-container" id="container-meeting-id">
-                <label>Your Meeting Connection ID:</label>
-                <input type="text" id="modal-input" readonly>
-            </div>
-            <div class="modal-field-container" id="container-share-link" style="display:none;">
-                <label>Share this link:</label>
-                <input type="text" id="modal-share-link" readonly onclick="this.select()">
-            </div>
-        </div>
-        <div style="display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap;">
+        <div id="modal-fields-wrapper" style="display:none;"></div>
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
             <button class="btn-gray" onclick="closeModal()">Cancel</button>
-            <button class="btn-blue" id="modal-copy-link" style="display:none;" onclick="copyShareLink()">Copy Link</button>
             <button class="btn-blue" id="modal-confirm" onclick="handleModalConfirm()">Confirm</button>
         </div>
     </div>
@@ -273,15 +487,39 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
 <div id="toast"></div>
 
+<!-- Chat notification popup -->
+<div id="chat-notif-popup" onclick="openChatFromNotif()">
+    <div class="notif-header">💬 New Message</div>
+    <div class="notif-name" id="notif-sender-name">Someone</div>
+    <div class="notif-text" id="notif-msg-text"></div>
+    <div class="notif-tap">Tap to open chat →</div>
+</div>
+
 <div id="main-stage">
     <div id="empty-state">
         <div class="empty-icon">📹</div>
-        <p>No one else is here yet.<br>Share your ID or invite someone to join.</p>
+        <p>No one else is here yet.<br>Invite someone to join!</p>
     </div>
 </div>
-<div id="local-container"><video id="local-video" autoplay muted playsinline></video></div>
 
-<!-- BOTTOM toolbar -->
+<!-- ══ PIP FLOATING PANEL — Zoom/Meet style ══ -->
+<div id="pip-container">
+    <div id="pip-panel">
+        <div id="pip-header">
+            <span>Participants</span>
+            <button id="pip-toggle-btn" onclick="togglePip()">−</button>
+        </div>
+        <div id="pip-thumbs">
+            <!-- local thumb always present -->
+            <div class="pip-thumb" id="pip-local" style="border-color:#007aff;">
+                <video id="local-video" autoplay muted playsinline></video>
+                <div class="pip-label">You</div>
+                <div class="pip-active-dot"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="toolbar">
     <input type="text" id="friend-id-input" placeholder="Paste peer ID">
     <button class="btn-blue" onclick="joinCall()">Connect</button>
@@ -290,15 +528,14 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     <button id="btn-video" class="btn-gray" onclick="toggleVideo()">Stop Video</button>
     <button id="btn-screen" class="btn-blue" onclick="toggleScreen()">Share Screen</button>
     <button class="btn-blue" onclick="showInviteModal()">Invite</button>
-    <button class="btn-blue" onclick="toggleChat(true)">Chat</button>
+    <button class="btn-blue" onclick="toggleChat(true)" id="btn-chat">Chat</button>
     <button class="btn-red" onclick="showEndModal()">End</button>
 </div>
 
-<!-- VERTICAL toolbar (portrait phone) -->
 <div id="vertical-toolbar">
     <input type="text" id="friend-id-input-v" class="vt-input" placeholder="ID">
     <button class="vt-btn btn-blue"  onclick="joinCallV()">Con&shy;nect</button>
-    <button class="vt-btn btn-green" onclick="copyMyId()" title="Copy my ID">⎘</button>
+    <button class="vt-btn btn-green" onclick="copyMyId()">⎘</button>
     <button id="vbtn-mute"   class="vt-btn btn-red"  onclick="toggleMute()">Mute</button>
     <button id="vbtn-video"  class="vt-btn btn-gray" onclick="toggleVideo()">Stop<br>Vid</button>
     <button id="vbtn-screen" class="vt-btn btn-blue" onclick="toggleScreen()">Scrn</button>
@@ -308,6 +545,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 </div>
 
 <button id="restore-chat" onclick="toggleChat(true)">Chat</button>
+<div id="chat-notif-badge" style="display:none;align-items:center;justify-content:center;">0</div>
 
 <div id="chat-sidebar">
     <div id="resizer"></div>
@@ -323,228 +561,297 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 </div>
 
 <script>
-    /* ─── PEER SETUP ─── */
     const peer = new Peer();
     let myStream, myScreen, myId = null, modalAction = null;
-    let pendingJoinId = null; // from URL hash, waiting for peer ready + stream ready
-    let streamReady = false, peerReady = false;
-    const connections = {}, calls = {};
-    const peerVideoSlots = {};
+    let pendingJoinId = null, streamReady = false, peerReady = false;
+    const connections = {}, calls = {}, peerVideoSlots = {}, pipThumbs = {};
+    let unreadCount = 0, chatIsOpen = false;
+    let notifTimer = null;
 
     const sidebar    = document.getElementById('chat-sidebar');
     const resizer    = document.getElementById('resizer');
     const restoreBtn = document.getElementById('restore-chat');
-    const localBox   = document.getElementById('local-container');
+    const pipPanel   = document.getElementById('pip-panel');
+    let pipCollapsed = false;
 
-    /* ── PEER COLORS ── */
     const PEER_COLORS = ['#ff3b30','#34c759','#ff9500','#af52de','#ff2d55','#5ac8fa','#ffcc00','#00c7be'];
     const MY_COLOR = '#007aff';
     const peerColorMap = {};
     let peerColorIndex = 0;
-
-    function getPeerColor(peerId) {
-        if (!peerColorMap[peerId]) { peerColorMap[peerId] = PEER_COLORS[peerColorIndex++ % PEER_COLORS.length]; }
-        return peerColorMap[peerId];
+    function getPeerColor(id) {
+        if (!peerColorMap[id]) peerColorMap[id] = PEER_COLORS[peerColorIndex++ % PEER_COLORS.length];
+        return peerColorMap[id];
     }
 
-    /* ── TOAST ── */
-    function showToast(msg, duration=2200) {
+    // ── PIP DRAG ──
+    (function() {
+        const container = document.getElementById('pip-container');
+        let dragging = false, ox = 0, oy = 0;
+        pipPanel.addEventListener('pointerdown', e => {
+            if (e.target.id === 'pip-toggle-btn') return;
+            dragging = true;
+            const rect = container.getBoundingClientRect();
+            ox = e.clientX - rect.left;
+            oy = e.clientY - rect.top;
+            pipPanel.style.cursor = 'grabbing';
+            pipPanel.setPointerCapture(e.pointerId);
+        });
+        pipPanel.addEventListener('pointermove', e => {
+            if (!dragging) return;
+            let nx = e.clientX - ox;
+            let ny = e.clientY - oy;
+            nx = Math.max(0, Math.min(window.innerWidth - container.offsetWidth, nx));
+            ny = Math.max(0, Math.min(window.innerHeight - container.offsetHeight, ny));
+            container.style.left = nx + 'px';
+            container.style.top  = ny + 'px';
+            container.style.right = 'auto';
+            container.style.bottom = 'auto';
+        });
+        pipPanel.addEventListener('pointerup', () => { dragging = false; pipPanel.style.cursor = 'grab'; });
+    })();
+
+    function togglePip() {
+        pipCollapsed = !pipCollapsed;
+        pipPanel.classList.toggle('collapsed', pipCollapsed);
+        document.getElementById('pip-toggle-btn').textContent = pipCollapsed ? '+' : '−';
+    }
+
+    // ── NOTIFICATIONS ──
+    function requestNotifPerms() {
+        if (!('Notification' in window)) { showToast('Notifications not supported in this browser.'); return; }
+        Notification.requestPermission().then(p => {
+            if (p === 'granted') showToast('✅ Notifications enabled!');
+            document.getElementById('notif-banner').style.display = 'none';
+        });
+    }
+
+    function showChatNotif(senderName, text) {
+        // Browser notification
+        if (Notification.permission === 'granted') {
+            const n = new Notification('ZXYsupernova Chat', {
+                body: `${senderName}: ${text}`,
+                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23007aff"/><text y="44" x="8" font-size="42">💬</text></svg>',
+                tag: 'zxy-chat',
+                silent: false
+            });
+            n.onclick = () => { window.focus(); openChatFromNotif(); };
+        }
+
+        // In-app popup
+        if (!chatIsOpen) {
+            document.getElementById('notif-sender-name').textContent = senderName;
+            document.getElementById('notif-msg-text').textContent = text.length > 80 ? text.slice(0,80) + '…' : text;
+            const popup = document.getElementById('chat-notif-popup');
+            popup.style.display = 'block';
+            clearTimeout(notifTimer);
+            notifTimer = setTimeout(() => { popup.style.display = 'none'; }, 5000);
+
+            // Badge count
+            unreadCount++;
+            const badge = document.getElementById('chat-notif-badge');
+            badge.style.display = 'flex';
+            badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        }
+
+        // Play notification sound
+        try {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+            osc.start(); osc.stop(ctx.currentTime + 0.3);
+        } catch(e) {}
+    }
+
+    function openChatFromNotif() {
+        document.getElementById('chat-notif-popup').style.display = 'none';
+        toggleChat(true);
+    }
+
+    function showToast(msg, ms=2400) {
         const t = document.getElementById('toast');
         t.textContent = msg; t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), duration);
-    }
-
-    /* ── CHECK URL HASH (join link) ── */
-    function checkHashAndMaybeJoin() {
-        const hash = window.location.hash.replace('#', '').trim();
-        if (!hash || hash === myId) return;
-        pendingJoinId = hash;
-        tryAutoJoin();
-    }
-
-    function tryAutoJoin() {
-        if (!pendingJoinId) return;
-        if (!streamReady || !peerReady) return; // wait for both
-        if (connections[pendingJoinId] || calls[pendingJoinId]) { pendingJoinId = null; return; } // already connected
-        connectToPeer(pendingJoinId);
-        pendingJoinId = null;
-        // Clean up hash so sharing the tab doesn't loop
-        history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
-
-    function joinFromBanner() {
-        const banner = document.getElementById('join-banner');
-        const id = banner.dataset.targetId;
-        banner.style.display = 'none';
-        if (id) connectToPeer(id);
+        setTimeout(() => t.classList.remove('show'), ms);
     }
 
     /* ── MEDIA ── */
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+    navigator.mediaDevices.getUserMedia({ video:true, audio:true }).then(stream => {
         myStream = stream;
         document.getElementById('local-video').srcObject = stream;
-        streamReady = true;
-        tryAutoJoin();
-    }).catch(err => {
-        showToast('⚠️ Camera/mic access denied. Some features disabled.');
-        streamReady = true; // still try to join (audio-only is fine)
-        tryAutoJoin();
-    });
+        streamReady = true; tryAutoJoin();
+    }).catch(() => { streamReady = true; tryAutoJoin(); });
 
+    /* ── PEER ── */
     peer.on('open', id => {
         myId = id; peerReady = true;
         const msg = document.createElement('div');
-        msg.className = 'id-system-msg';
-        msg.innerText = `Your ID: ${id}`;
-        msg.title = 'Click to copy';
-        msg.style.cursor = 'pointer';
-        msg.addEventListener('click', () => copyMyId());
+        msg.className = 'id-system-msg'; msg.innerText = `Your ID: ${id}`;
+        msg.title = 'Click to copy'; msg.style.cursor = 'pointer';
+        msg.addEventListener('click', copyMyId);
         document.getElementById('messages').appendChild(msg);
 
-        // Show join banner if hash present
-        const hash = window.location.hash.replace('#', '').trim();
+        const hash = window.location.hash.replace('#','').trim();
         if (hash && hash !== id) {
             const banner = document.getElementById('join-banner');
             banner.dataset.targetId = hash;
-            document.getElementById('join-banner-text').textContent = `Join call? (Host ID: ${hash.substring(0,8)}…)`;
+            document.getElementById('join-banner-text').textContent = `Join call? Host ID: ${hash.substring(0,12)}…`;
             banner.style.display = 'block';
         }
-
         tryAutoJoin();
+
+        // Ask for notification permission after peer is ready
+        if ('Notification' in window && Notification.permission === 'default') {
+            setTimeout(() => {
+                document.getElementById('notif-banner').style.display = 'block';
+            }, 3000);
+        }
     });
 
     peer.on('call', call => { call.answer(myStream); handleCall(call); });
     peer.on('connection', conn => setupChat(conn));
-
     peer.on('error', err => {
-        console.error('PeerJS error:', err);
         if (err.type === 'peer-unavailable') showToast('❌ Peer not found. Check the ID.');
-        else showToast('⚠️ Connection error: ' + err.type);
+        else showToast('⚠️ Error: ' + err.type);
     });
 
-    /* ── COPY MY ID ── */
-    function copyMyId() {
-        if (!myId) return;
-        navigator.clipboard.writeText(myId).then(() => showToast('✅ Your ID copied!')).catch(() => {
-            // fallback
-            const ta = document.createElement('textarea');
-            ta.value = myId; document.body.appendChild(ta); ta.select();
-            document.execCommand('copy'); ta.remove(); showToast('✅ Your ID copied!');
-        });
+    function checkHashAndMaybeJoin() {
+        const hash = window.location.hash.replace('#','').trim();
+        if (hash && hash !== myId) { pendingJoinId = hash; tryAutoJoin(); }
+    }
+    function tryAutoJoin() {
+        if (!pendingJoinId || !streamReady || !peerReady) return;
+        if (connections[pendingJoinId] || calls[pendingJoinId]) { pendingJoinId = null; return; }
+        connectToPeer(pendingJoinId); pendingJoinId = null;
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    function joinFromBanner() {
+        const id = document.getElementById('join-banner').dataset.targetId;
+        document.getElementById('join-banner').style.display = 'none';
+        if (id) connectToPeer(id);
     }
 
-    /* ── CONNECT ── */
     function connectToPeer(id) {
         if (!id) return;
-        if (!myStream && !streamReady) { showToast('Waiting for camera…'); return; }
-        // Deduplicate
         if (calls[id]) { showToast('Already connected to this peer.'); return; }
-        addSysMsg(`Connecting to ${id.substring(0,8)}…`);
+        addSysMsg(`Connecting to ${id.substring(0,12)}…`);
         handleCall(peer.call(id, myStream));
-        const conn = peer.connect(id);
-        setupChat(conn);
+        setupChat(peer.connect(id));
     }
-
     function joinCall() {
         const id = document.getElementById('friend-id-input').value.trim();
         if (!id) { showToast('Paste a peer ID first.'); return; }
-        document.getElementById('friend-id-input').value = '';
-        connectToPeer(id);
+        document.getElementById('friend-id-input').value = ''; connectToPeer(id);
     }
-
     function joinCallV() {
         const id = document.getElementById('friend-id-input-v').value.trim();
         if (!id) { showToast('Paste a peer ID first.'); return; }
-        document.getElementById('friend-id-input-v').value = '';
-        connectToPeer(id);
+        document.getElementById('friend-id-input-v').value = ''; connectToPeer(id);
     }
 
-    /* ── CALL HANDLING ── */
+    /* ── CALL / VIDEO SLOTS ── */
     function getOrCreateVideoSlot(peerId) {
         const color = getPeerColor(peerId);
         if (peerVideoSlots[peerId]) return peerVideoSlots[peerId];
         document.getElementById('empty-state').style.display = 'none';
         const wrapper = document.createElement('div');
-        wrapper.className = 'remote-video-wrapper';
-        wrapper.id = `vw-${peerId}`;
+        wrapper.className = 'remote-video-wrapper'; wrapper.id = `vw-${peerId}`;
         wrapper.style.border = `3px solid ${color}`;
-        wrapper.style.borderRadius = '14px';
-        wrapper.style.minHeight = '160px';
         wrapper.innerHTML = `<div class="peer-connecting"><div class="connecting-spinner"></div>Connecting…</div>`;
         const v = document.createElement('video');
-        v.id = `v-${peerId}`; v.className = 'remote-video';
-        v.autoplay = true; v.playsInline = true;
-        const label = document.createElement('div');
-        label.className = 'peer-label';
-        label.textContent = peerId.substring(0, 12) + '…';
-        wrapper.appendChild(v);
-        wrapper.appendChild(label);
+        v.id = `v-${peerId}`; v.className = 'remote-video'; v.autoplay = true; v.playsInline = true;
+        const lbl = document.createElement('div');
+        lbl.className = 'peer-label'; lbl.textContent = peerId.substring(0,14) + '…';
+        wrapper.appendChild(v); wrapper.appendChild(lbl);
         document.getElementById('main-stage').appendChild(wrapper);
         peerVideoSlots[peerId] = wrapper;
+        addPipThumb(peerId, color);
         return wrapper;
+    }
+
+    function addPipThumb(peerId, color) {
+        if (pipThumbs[peerId]) return;
+        const thumb = document.createElement('div');
+        thumb.className = 'pip-thumb'; thumb.style.borderColor = color;
+        const v = document.createElement('video');
+        v.autoplay = true; v.playsInline = true;
+        const lbl = document.createElement('div');
+        lbl.className = 'pip-label'; lbl.textContent = peerId.substring(0,10) + '…';
+        const dot = document.createElement('div');
+        dot.className = 'pip-active-dot';
+        thumb.appendChild(v); thumb.appendChild(lbl); thumb.appendChild(dot);
+        const thumbsContainer = document.getElementById('pip-thumbs');
+        // Insert before local thumb (local stays at bottom)
+        thumbsContainer.insertBefore(thumb, thumbsContainer.firstChild);
+        pipThumbs[peerId] = { thumb, video: v };
+    }
+
+    function removePipThumb(peerId) {
+        if (pipThumbs[peerId]) { pipThumbs[peerId].thumb.remove(); delete pipThumbs[peerId]; }
     }
 
     function handleCall(call) {
         calls[call.peer] = call;
         getPeerColor(call.peer);
-        getOrCreateVideoSlot(call.peer); // show "connecting" box immediately
+        getOrCreateVideoSlot(call.peer);
 
         call.on('stream', stream => {
             const slot = getOrCreateVideoSlot(call.peer);
-            // Remove spinner
             const spinner = slot.querySelector('.peer-connecting');
             if (spinner) spinner.remove();
-            const v = slot.querySelector('video');
-            v.srcObject = stream;
-            addSysMsg(`🟢 ${call.peer.substring(0,8)}… joined`);
+            slot.querySelector('video').srcObject = stream;
+            if (pipThumbs[call.peer]) pipThumbs[call.peer].video.srcObject = stream;
+            addSysMsg(`🟢 ${call.peer.substring(0,12)}… joined`);
             showToast('🟢 Peer connected!');
         });
 
         call.on('close', () => {
             const slot = peerVideoSlots[call.peer];
-            if (slot) { const v = slot.querySelector('video'); if (v) v.srcObject = null; }
-            addSysMsg(`🔴 ${call.peer.substring(0,8)}… left`);
-            delete calls[call.peer];
-            updateEmptyState();
+            if (slot) { const v = slot.querySelector('video'); if (v) v.srcObject = null; slot.remove(); }
+            delete peerVideoSlots[call.peer];
+            removePipThumb(call.peer);
+            addSysMsg(`🔴 ${call.peer.substring(0,12)}… left`);
+            delete calls[call.peer]; updateEmptyState();
         });
 
-        call.on('error', (e) => {
-            const slot = peerVideoSlots[call.peer];
-            if (slot) { const v = slot.querySelector('video'); if (v) v.srcObject = null; }
-            delete calls[call.peer];
-            updateEmptyState();
-        });
+        call.on('error', () => { removePipThumb(call.peer); delete calls[call.peer]; updateEmptyState(); });
     }
 
     function setupChat(conn) {
         connections[conn.peer] = conn;
         getPeerColor(conn.peer);
-
         conn.on('data', data => {
-            if (data.type === 'chat') appendMessage(data.text, 'them', conn.peer);
+            if (data.type === 'chat') {
+                appendMessage(data.text, 'them', conn.peer);
+                showChatNotif(conn.peer.substring(0,10) + '…', data.text);
+            }
             if (data.type === 'react') {
                 const r = document.getElementById('re-' + data.id);
                 if (r) r.innerText = data.emoji;
                 showBigReaction(data.emoji);
             }
         });
-
         conn.on('close', () => { delete connections[conn.peer]; });
     }
 
     function updateEmptyState() {
-        const hasVideos = Object.keys(peerVideoSlots).some(id => {
-            const slot = peerVideoSlots[id];
-            return slot && slot.isConnected;
-        });
-        document.getElementById('empty-state').style.display = hasVideos ? 'none' : 'flex';
+        const has = Object.keys(peerVideoSlots).length > 0;
+        document.getElementById('empty-state').style.display = has ? 'none' : 'flex';
     }
-
     function addSysMsg(text) {
-        const el = document.createElement('div');
-        el.className = 'sys-msg'; el.textContent = text;
+        const el = document.createElement('div'); el.className = 'sys-msg'; el.textContent = text;
         document.getElementById('messages').appendChild(el);
         document.getElementById('messages').scrollTop = 99999;
+    }
+
+    function copyMyId() {
+        if (!myId) return;
+        navigator.clipboard.writeText(myId)
+            .then(() => showToast('✅ Your ID copied!'))
+            .catch(() => { const ta = document.createElement('textarea'); ta.value = myId; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); showToast('✅ Your ID copied!'); });
     }
 
     /* ── MESSAGES ── */
@@ -553,33 +860,28 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
         const wrapper = document.createElement('div');
         wrapper.className = `msg-wrapper ${side}`;
-        const bubbleColor = (side === 'me') ? MY_COLOR : (peerId ? getPeerColor(peerId) : '#8e8e93');
-        const emojiList = ['😭','⏰','📚','🌐','📆','🤔','😈','😂','👏','🖐','🎉','💧','🔮','😀','😆','👋','🧻','🔥','✨','🚀','💯'];
-        const emojiButtons = emojiList.map(e => `<button class="action-btn" data-emoji="${e}">${e}</button>`).join('');
+        const color = (side === 'me') ? MY_COLOR : (peerId ? getPeerColor(peerId) : '#8e8e93');
+        const emojis = ['😭','⏰','📚','🌐','📆','🤔','😈','😂','👏','🖐','🎉','💧','🔮','😀','😆','👋','🧻','🔥','✨','🚀','💯'];
         wrapper.innerHTML = `
             <div class="bubble-container">
-                <div class="msg-bubble" id="${msgId}" style="background:${bubbleColor};">${text}</div>
-                <div class="msg-actions" data-msgid="${msgId}">
-                    <span class="emoji-trigger" title="React">😊</span>
-                    <div class="emoji-tray">${emojiButtons}</div>
+                <div class="msg-bubble" id="${msgId}" style="background:${color};">${text}</div>
+                <div class="msg-actions">
+                    <span class="emoji-trigger">😊</span>
+                    <div class="emoji-tray">${emojis.map(e=>`<button class="action-btn" data-emoji="${e}">${e}</button>`).join('')}</div>
                     <div class="util-btns"><button class="action-btn" title="Copy">❐</button></div>
                 </div>
             </div>
-            <div class="msg-meta"><span>${time}</span> <span id="re-${msgId}" class="reaction-badge"></span></div>
-        `;
-        const msgActionsEl = wrapper.querySelector('.msg-actions');
+            <div class="msg-meta"><span>${time}</span><span id="re-${msgId}" class="reaction-badge"></span></div>`;
+
         const tray = wrapper.querySelector('.emoji-tray');
-        const trigger = wrapper.querySelector('.emoji-trigger');
-        const copyBtn = wrapper.querySelector('.util-btns .action-btn');
-        trigger.addEventListener('click', () => reactTo(msgId, '😊'));
-        msgActionsEl.addEventListener('mouseenter', () => { clearTimeout(collapseTimer); openEmojiTray(tray); });
-        msgActionsEl.addEventListener('mouseleave', () => scheduleClose(tray));
+        wrapper.querySelector('.emoji-trigger').addEventListener('click', () => reactTo(msgId, '😊'));
+        wrapper.querySelector('.msg-actions').addEventListener('mouseenter', () => { clearTimeout(collapseTimer); openEmojiTray(tray); });
+        wrapper.querySelector('.msg-actions').addEventListener('mouseleave', () => scheduleClose(tray));
         tray.addEventListener('mouseenter', () => clearTimeout(collapseTimer));
         tray.addEventListener('mouseleave', () => scheduleClose(tray));
-        tray.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('click', () => { reactTo(msgId, btn.dataset.emoji); closeEmojiTray(tray); });
-        });
-        copyBtn.addEventListener('click', () => navigator.clipboard.writeText(document.getElementById(msgId).innerText));
+        tray.querySelectorAll('.action-btn').forEach(btn => btn.addEventListener('click', () => { reactTo(msgId, btn.dataset.emoji); closeEmojiTray(tray); }));
+        wrapper.querySelector('.util-btns .action-btn').addEventListener('click', () => navigator.clipboard.writeText(document.getElementById(msgId).innerText));
+
         document.getElementById('messages').appendChild(wrapper);
         document.getElementById('messages').scrollTop = 99999;
         return msgId;
@@ -589,139 +891,71 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         const el = document.getElementById('re-' + id);
         if (el) {
             el.innerText = emoji; showBigReaction(emoji);
-            Object.values(connections).forEach(c => { try { c.send({ type: 'react', id, emoji }); } catch(e){} });
+            Object.values(connections).forEach(c => { try { c.send({ type:'react', id, emoji }); } catch(e){} });
         }
     }
-
     function sendChatMessage() {
-        const text = document.getElementById('chat-msg').value.trim();
-        if (!text) return;
-        Object.values(connections).forEach(c => { try { c.send({ type: 'chat', text }); } catch(e){} });
+        const text = document.getElementById('chat-msg').value.trim(); if (!text) return;
+        Object.values(connections).forEach(c => { try { c.send({ type:'chat', text }); } catch(e){} });
         appendMessage(text, 'me', null);
         document.getElementById('chat-msg').value = '';
     }
 
-    /* ── DRAG (local video) ── */
-    let currentX = 20, currentY = 20, initialX, initialY;
-    let xOffset = 20, yOffset = 20, activeDragging = false;
-    let lastTime = 0, lastX = 0, lastY = 0, velocityX = 0, velocityY = 0, inertiaFrameId = null;
-
-    localBox.addEventListener('pointerdown', dragStart);
-    document.addEventListener('pointermove', dragMove);
-    document.addEventListener('pointerup', dragEnd);
-
-    function dragStart(e) {
-        if (inertiaFrameId) cancelAnimationFrame(inertiaFrameId);
-        initialX = e.clientX - xOffset; initialY = e.clientY - yOffset;
-        if (e.target === localBox || localBox.contains(e.target)) {
-            activeDragging = true; localBox.setPointerCapture(e.pointerId);
-            lastTime = performance.now(); lastX = e.clientX; lastY = e.clientY;
-            velocityX = 0; velocityY = 0;
-        }
-    }
-
-    function dragMove(e) {
-        if (!activeDragging) return; e.preventDefault();
-        const now = performance.now(), dt = now - lastTime;
-        if (dt > 0) { velocityX = (e.clientX - lastX)/dt; velocityY = (e.clientY - lastY)/dt; lastTime = now; lastX = e.clientX; lastY = e.clientY; }
-        currentX = e.clientX - initialX; currentY = e.clientY - initialY;
-        clampAndApply();
-    }
-
-    function dragEnd() {
-        if (!activeDragging) return; activeDragging = false;
-        initialX = currentX; initialY = currentY;
-        const friction = 0.985;
-        function glide() {
-            if (Math.abs(velocityX) < 0.005 && Math.abs(velocityY) < 0.005) { cancelAnimationFrame(inertiaFrameId); return; }
-            velocityX *= friction; velocityY *= friction;
-            currentX += velocityX * 16; currentY += velocityY * 16;
-            const h = clampAndApply();
-            if (h.x) velocityX = 0; if (h.y) velocityY = 0;
-            xOffset = currentX; yOffset = currentY; initialX = currentX; initialY = currentY;
-            inertiaFrameId = requestAnimationFrame(glide);
-        }
-        inertiaFrameId = requestAnimationFrame(glide);
-    }
-
-    function clampAndApply() {
-        const bw = localBox.offsetWidth, bh = localBox.offsetHeight;
-        const ww = window.innerWidth, wh = window.innerHeight;
-        const vtw = document.getElementById('vertical-toolbar').offsetWidth || 0;
-        const isChatOpen = !sidebar.classList.contains('hidden');
-        const maxX = (isChatOpen ? ww - sidebar.offsetWidth : ww) - vtw - bw;
-        let hx = false, hy = false;
-        if (currentX < 0) { currentX = 0; hx = true; }
-        if (currentY < 0) { currentY = 0; hy = true; }
-        if (currentX > maxX) { currentX = Math.max(0, maxX); hx = true; }
-        if (currentY + bh > wh) { currentY = wh - bh; hy = true; }
-        xOffset = currentX; yOffset = currentY;
-        localBox.style.transform = `translate3d(${currentX}px,${currentY}px,0)`;
-        return { x: hx, y: hy };
-    }
-
     /* ── RESIZER ── */
     let isResizing = false, baseSidebarWidth = 320;
-
-    resizer.addEventListener('pointerdown', (e) => {
-        isResizing = true; sidebar.classList.remove('smooth-width');
-        document.body.style.cursor = 'col-resize'; resizer.setPointerCapture(e.pointerId);
-    });
-    document.addEventListener('pointermove', (e) => {
+    resizer.addEventListener('pointerdown', e => { isResizing = true; sidebar.classList.remove('smooth-width'); document.body.style.cursor = 'col-resize'; resizer.setPointerCapture(e.pointerId); });
+    document.addEventListener('pointermove', e => {
         if (!isResizing) return;
         let nw = window.innerWidth - e.clientX;
         if (nw < 150) { toggleChat(false); isResizing = false; return; }
         if (nw > window.innerWidth * 0.8) nw = window.innerWidth * 0.8;
-        baseSidebarWidth = nw; sidebar.style.width = nw + 'px';
-        document.documentElement.style.setProperty('--sidebar-width', nw + 'px');
-        adjustLocalBoxBoundary();
+        baseSidebarWidth = nw; sidebar.style.width = nw+'px';
+        document.documentElement.style.setProperty('--sidebar-width', nw+'px');
     });
     document.addEventListener('pointerup', () => { isResizing = false; document.body.style.cursor = 'default'; });
 
     function toggleChat(show) {
         sidebar.classList.add('smooth-width');
-        if (show) { sidebar.classList.remove('hidden'); restoreBtn.style.display = 'none'; document.body.classList.add('chat-open'); }
-        else       { sidebar.classList.add('hidden');    restoreBtn.style.display = 'block'; document.body.classList.remove('chat-open'); }
-        setTimeout(() => { adjustLocalBoxBoundary(); sidebar.classList.remove('smooth-width'); }, 380);
-    }
-
-    function adjustLocalBoxBoundary() {
-        const bw = localBox.offsetWidth, ww = window.innerWidth;
-        const vtw = document.getElementById('vertical-toolbar').offsetWidth || 0;
-        const isChatOpen = !sidebar.classList.contains('hidden');
-        const maxX = (isChatOpen ? ww - sidebar.offsetWidth : ww) - vtw - bw;
-        if (currentX > maxX) { currentX = Math.max(0, maxX); xOffset = currentX; localBox.style.transform = `translate3d(${currentX}px,${currentY}px,0)`; }
+        chatIsOpen = show;
+        if (show) {
+            sidebar.classList.remove('hidden');
+            restoreBtn.style.display = 'none';
+            document.body.classList.add('chat-open');
+            // Clear badge
+            unreadCount = 0;
+            document.getElementById('chat-notif-badge').style.display = 'none';
+            document.getElementById('chat-notif-popup').style.display = 'none';
+        } else {
+            sidebar.classList.add('hidden');
+            restoreBtn.style.display = 'block';
+            document.body.classList.remove('chat-open');
+        }
+        setTimeout(() => sidebar.classList.remove('smooth-width'), 380);
     }
 
     /* ── EMOJI TRAY ── */
     let openTray = null, collapseTimer = null;
-
     function openEmojiTray(tray) {
         if (openTray && openTray !== tray) closeEmojiTray(openTray);
         clearTimeout(collapseTimer); openTray = tray; tray.classList.add('open');
-        const needed = 900;
-        if (sidebar.offsetWidth < needed) {
-            const cap = Math.min(needed, window.innerWidth * 0.92);
-            sidebar.classList.add('smooth-width'); sidebar.style.width = cap + 'px';
-            document.documentElement.style.setProperty('--sidebar-width', cap + 'px');
+        if (sidebar.offsetWidth < 900) {
+            const cap = Math.min(900, window.innerWidth * 0.92);
+            sidebar.classList.add('smooth-width'); sidebar.style.width = cap+'px';
+            document.documentElement.style.setProperty('--sidebar-width', cap+'px');
         }
     }
-
     function scheduleClose(tray) { clearTimeout(collapseTimer); collapseTimer = setTimeout(() => closeEmojiTray(tray), 300); }
-
     function closeEmojiTray(tray) {
         if (!tray) return; tray.classList.remove('open'); if (openTray === tray) openTray = null;
-        sidebar.classList.add('smooth-width'); sidebar.style.width = baseSidebarWidth + 'px';
-        document.documentElement.style.setProperty('--sidebar-width', baseSidebarWidth + 'px');
+        sidebar.classList.add('smooth-width'); sidebar.style.width = baseSidebarWidth+'px';
+        document.documentElement.style.setProperty('--sidebar-width', baseSidebarWidth+'px');
     }
 
-    /* ── BIG REACTION ── */
     function showBigReaction(emoji) {
         const el = document.createElement('div');
         el.className = 'big-reaction-popup'; el.textContent = emoji;
-        const vtw = document.getElementById('vertical-toolbar').offsetWidth || 0;
         const isChatOpen = !sidebar.classList.contains('hidden');
-        const stageW = window.innerWidth - vtw - (isChatOpen ? sidebar.offsetWidth : 0);
+        const stageW = window.innerWidth - (isChatOpen ? sidebar.offsetWidth : 0);
         el.style.left = (Math.random() * Math.max(20, stageW - 100) + 10) + 'px';
         el.style.bottom = '100px';
         document.body.appendChild(el);
@@ -730,115 +964,134 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
     /* ── CONTROLS ── */
     function toggleMute() {
-        if (!myStream) return;
-        const enabled = myStream.getAudioTracks()[0]?.enabled;
-        if (myStream.getAudioTracks()[0]) myStream.getAudioTracks()[0].enabled = !enabled;
-        const label = !enabled ? "Mute" : "Unmute";
-        document.getElementById('btn-mute').innerText = label;
-        const vb = document.getElementById('vbtn-mute'); if (vb) vb.innerText = label;
+        const t = myStream?.getAudioTracks()[0]; if (!t) return;
+        t.enabled = !t.enabled;
+        document.getElementById('btn-mute').innerText = t.enabled ? 'Mute' : 'Unmute';
+        const vb = document.getElementById('vbtn-mute'); if (vb) vb.innerText = t.enabled ? 'Mute' : 'Unmute';
     }
-
     function toggleVideo() {
-        if (!myStream) return;
-        const enabled = myStream.getVideoTracks()[0]?.enabled;
-        if (myStream.getVideoTracks()[0]) myStream.getVideoTracks()[0].enabled = !enabled;
-        const label = !enabled ? "Stop Video" : "Start Video";
-        document.getElementById('btn-video').innerText = label;
-        const vb = document.getElementById('vbtn-video'); if (vb) vb.innerHTML = !enabled ? "Stop<br>Vid" : "Start<br>Vid";
+        const t = myStream?.getVideoTracks()[0]; if (!t) return;
+        t.enabled = !t.enabled;
+        document.getElementById('btn-video').innerText = t.enabled ? 'Stop Video' : 'Start Video';
+        const vb = document.getElementById('vbtn-video'); if (vb) vb.innerHTML = t.enabled ? 'Stop<br>Vid' : 'Start<br>Vid';
     }
-
     function toggleScreen() {
-        const btn = document.getElementById('btn-screen');
-        const vbtn = document.getElementById('vbtn-screen');
+        const btn = document.getElementById('btn-screen'), vbtn = document.getElementById('vbtn-screen');
         if (myScreen) {
             myScreen.getTracks().forEach(t => t.stop()); myScreen = null;
-            btn.innerText = "Share Screen"; btn.className = "btn-blue";
-            if (vbtn) { vbtn.innerText = "Scrn"; vbtn.className = "vt-btn btn-blue"; }
+            btn.innerText = 'Share Screen'; btn.className = 'btn-blue';
+            if (vbtn) { vbtn.innerText = 'Scrn'; vbtn.className = 'vt-btn btn-blue'; }
             if (myStream) { replacePeerTrack(myStream.getVideoTracks()[0]); document.getElementById('local-video').srcObject = myStream; }
         } else {
-            if (!navigator.mediaDevices.getDisplayMedia) { alert("Screen sharing not supported."); return; }
-            navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then(stream => {
-                myScreen = stream; btn.innerText = "Stop Sharing"; btn.className = "btn-red";
-                if (vbtn) { vbtn.innerText = "Stop"; vbtn.className = "vt-btn btn-red"; }
+            if (!navigator.mediaDevices.getDisplayMedia) { alert('Screen sharing not supported.'); return; }
+            navigator.mediaDevices.getDisplayMedia({ video:true, audio:false }).then(stream => {
+                myScreen = stream; btn.innerText = 'Stop Sharing'; btn.className = 'btn-red';
+                if (vbtn) { vbtn.innerText = 'Stop'; vbtn.className = 'vt-btn btn-red'; }
                 const st = stream.getVideoTracks()[0];
                 st.onended = () => { if (myScreen) toggleScreen(); };
                 replacePeerTrack(st); document.getElementById('local-video').srcObject = stream;
-            }).catch(err => console.error("Screen share error:", err));
+            }).catch(err => console.error(err));
         }
     }
-
     function replacePeerTrack(track) {
         if (!track) return;
-        Object.values(peer.connections).forEach(list => {
-            list.forEach(conn => {
-                if (conn.peerConnection) {
-                    const sender = conn.peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
-                    if (sender) sender.replaceTrack(track);
-                }
-            });
-        });
+        Object.values(peer.connections).forEach(list => list.forEach(conn => {
+            if (conn.peerConnection) {
+                const s = conn.peerConnection.getSenders().find(s => s.track?.kind === 'video');
+                if (s) s.replaceTrack(track);
+            }
+        }));
     }
 
     /* ── MODALS ── */
     function showEndModal() {
         modalAction = 'endCall';
-        document.getElementById('modal-title').innerText = "End Meeting?";
-        document.getElementById('modal-desc').innerText = "Are you sure you want to end this call?";
-        document.getElementById('modal-fields-wrapper').style.display = "none";
-        document.getElementById('modal-copy-link').style.display = "none";
-        document.getElementById('custom-modal-overlay').style.display = "flex";
+        document.getElementById('modal-title').innerText = 'End Meeting?';
+        document.getElementById('modal-desc').innerText = 'Are you sure you want to end this call?';
+        document.getElementById('modal-fields-wrapper').style.display = 'none';
+        document.getElementById('modal-confirm').innerText = 'End Call';
+        document.getElementById('custom-modal-overlay').style.display = 'flex';
     }
 
     function showInviteModal() {
         modalAction = 'invite';
-        const shareUrl = window.location.href.split('#')[0] + '#' + (myId || '');
-        document.getElementById('modal-title').innerText = "Invite Someone";
-        document.getElementById('modal-desc').innerText = "Share your link or ID. They open it and will auto-join.";
-        document.getElementById('modal-fields-wrapper').style.display = "block";
-        document.getElementById('container-user-email').style.display = "block";
-        document.getElementById('container-share-link').style.display = "block";
-        document.getElementById('modal-input').value = myId || "Generating…";
-        document.getElementById('modal-share-link').value = shareUrl;
-        document.getElementById('modal-copy-link').style.display = "inline-block";
-        document.getElementById('custom-modal-overlay').style.display = "flex";
-    }
+        document.getElementById('modal-title').innerText = '📨 Invite to Call';
+        document.getElementById('modal-desc').innerText = 'Enter their email — they\'ll receive a link to join your call instantly. No account needed.';
 
-    function copyShareLink() {
-        const link = document.getElementById('modal-share-link').value;
-        navigator.clipboard.writeText(link).then(() => showToast('✅ Link copied!')).catch(() => {
-            document.getElementById('modal-share-link').select();
-            document.execCommand('copy'); showToast('✅ Link copied!');
-        });
+        const joinUrl = window.location.href.split('#')[0] + (myId ? '#' + myId : '');
+
+        const fw = document.getElementById('modal-fields-wrapper');
+        fw.style.display = 'block';
+        fw.innerHTML = `
+            <div class="modal-field">
+                <label>Friend's Email</label>
+                <input type="email" id="invite-to-email" placeholder="friend@example.com" autocomplete="email">
+            </div>
+            <div class="modal-field">
+                <label>Your Name <span style="font-weight:400;text-transform:none;font-size:11px;">(so they know who's calling)</span></label>
+                <input type="text" id="invite-from-name" placeholder="Your name" autocomplete="name">
+            </div>
+            <div class="invite-link-preview">
+                <div class="ilp-label">🔗 Join Link (auto-included)</div>
+                <div class="ilp-link">${joinUrl}</div>
+                <div class="ilp-note">Your friend clicks this to join — no setup needed.</div>
+            </div>
+            <div class="email-note">
+                💡 <strong>Tip:</strong> This opens your email app with everything pre-filled — the TO address, subject, and a join link. Your friend can click the link to join instantly.
+            </div>`;
+
+        document.getElementById('modal-confirm').innerText = '✉️ Send Invite Email';
+        document.getElementById('custom-modal-overlay').style.display = 'flex';
+        setTimeout(() => document.getElementById('invite-to-email')?.focus(), 80);
     }
 
     function handleModalConfirm() {
         if (modalAction === 'endCall') {
             Object.values(connections).forEach(c => { try { c.close(); } catch(e){} });
             Object.values(calls).forEach(c => { try { c.close(); } catch(e){} });
-            Object.keys(peerVideoSlots).forEach(id => { const s = peerVideoSlots[id]; if (s) s.remove(); delete peerVideoSlots[id]; });
+            Object.keys(peerVideoSlots).forEach(id => { peerVideoSlots[id]?.remove(); delete peerVideoSlots[id]; });
+            Object.keys(pipThumbs).forEach(id => removePipThumb(id));
             updateEmptyState(); closeModal();
+
         } else if (modalAction === 'invite') {
-            const userEmail = document.getElementById('modal-user-email').value.trim();
-            const senderIdentity = userEmail.length > 0 ? userEmail : "Someone";
-            const shareUrl = document.getElementById('modal-share-link').value;
-            const subject = encodeURIComponent(`${senderIdentity} is inviting you to a call`);
-            const body = encodeURIComponent(`Hey!\n\n${senderIdentity} invited you to a video call.\n\n🔑 Connection ID: ${myId}\n👉 Join link (auto-connects): ${shareUrl}\n\nNo sign-up needed. Just click the link, allow camera & mic, and you'll connect automatically.\n\nSee you there!`);
-            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+            const toEmail  = (document.getElementById('invite-to-email')?.value  || '').trim();
+            const fromName = (document.getElementById('invite-from-name')?.value || '').trim() || 'Someone';
+
+            // Build the actual clickable join URL with your peer ID as the hash
+            const joinUrl = window.location.href.split('#')[0] + (myId ? '#' + myId : '');
+
+            const subject = encodeURIComponent(`${fromName} is inviting you to a video call on ZXYsupernova`);
+
+            // The body includes the clickable join link
+            const bodyText =
+`Hey!
+
+${fromName} is inviting you to join a live video call on ZXYsupernova.
+
+👉 Click this link to join instantly:
+${joinUrl}
+
+No account needed — just click the link above, allow camera & mic access when prompted, and you'll be connected directly to ${fromName}.
+
+The link is unique to this call — it works only while the call is active.
+
+See you there! 🎉`;
+
+            const body = encodeURIComponent(bodyText);
+
+            // toEmail goes directly into the mailto TO field — no manual copying needed
+            const mailto = `mailto:${encodeURIComponent(toEmail)}?subject=${subject}&body=${body}`;
+            window.open(mailto, '_blank');
+
+            showToast(`📨 Email draft opened for ${toEmail || 'your friend'}!`);
             closeModal();
         }
     }
 
-    function closeModal() { document.getElementById('custom-modal-overlay').style.display = "none"; }
-    function addNewPeer() { /* multi-peer placeholder */ }
+    function closeModal() { document.getElementById('custom-modal-overlay').style.display = 'none'; }
 
-    document.getElementById('chat-msg').addEventListener("keypress", e => { if (e.key === "Enter") sendChatMessage(); });
-    window.addEventListener('resize', adjustLocalBoxBoundary);
-
-    // Handle hash changes (someone shares the page URL with a hash)
+    document.getElementById('chat-msg').addEventListener('keypress', e => { if (e.key === 'Enter') sendChatMessage(); });
     window.addEventListener('hashchange', checkHashAndMaybeJoin);
-
-    // Initial check (page load with hash already present)
-    // Defer until after peer opens — handled in tryAutoJoin
 </script>
 </body>
 </html>
