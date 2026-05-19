@@ -38,7 +38,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             #vertical-toolbar { display: flex !important; }
             #chat-sidebar { position: fixed; right: 36px; top: 0; bottom: 0; z-index: 200; width: var(--sidebar-width); max-width: calc(100vw - 36px); }
             #chat-sidebar.hidden { transform: translateX(calc(100% + 36px)); }
-            #pip-container { right: 42px; }
+            #pip-strip { right: 42px; }
         }
         @media not all and (max-width: 600px) and (orientation: portrait) {
             body { display: flex; flex-direction: row; }
@@ -87,127 +87,43 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         .vt-btn.btn-green { background: var(--success); }
         .vt-btn.btn-gray  { background: #555; }
 
-        /* ══ PIP CONTAINER — Zoom/Meet style floating panel ══ */
-        #pip-container {
+        /* ══ PIP STRIP — bottom-right corner ══ */
+        #pip-strip {
             position: fixed;
-            bottom: 100px;
-            right: 18px;
+            bottom: 92px;
+            right: 16px;
             z-index: 2500;
             display: flex;
-            flex-direction: column;
+            flex-direction: column-reverse;   /* newest on top */
             align-items: flex-end;
-            gap: 0;
+            gap: 8px;
             pointer-events: none;
-            width: 160px;
         }
-
-        /* ══ PIP PANEL — the whole floating box ══ */
-        #pip-panel {
-            background: #1a1a1a;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08);
-            pointer-events: all;
-            width: 160px;
-            min-height: 90px;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            cursor: grab;
-            user-select: none;
-        }
-        #pip-panel:active { cursor: grabbing; }
-
-        /* ══ PIP HEADER ══ */
-        #pip-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 8px 4px;
-            background: rgba(0,0,0,0.6);
-            flex-shrink: 0;
-        }
-        #pip-header span {
-            font-size: 9px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.7);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-        #pip-toggle-btn {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            color: white;
-            font-size: 9px;
-            padding: 2px 6px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        #pip-toggle-btn:hover { background: rgba(255,255,255,0.25); }
-
-        /* ══ PIP THUMBNAILS ══ */
-        #pip-thumbs {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            padding: 4px;
-            overflow-y: auto;
-            max-height: 400px;
-        }
-
         .pip-thumb {
-            width: 100%;
+            width: 122px;
             aspect-ratio: 16/9;
-            border-radius: 10px;
+            border-radius: 11px;
             overflow: hidden;
-            background: #222;
+            background: #1c1c1c;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.75);
             position: relative;
             flex-shrink: 0;
-            border: 2px solid transparent;
-            transition: border-color 0.2s ease;
+            pointer-events: all;
+            border: 2.5px solid transparent;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            cursor: default;
         }
-        .pip-thumb:hover { border-color: rgba(255,255,255,0.3); }
-        .pip-thumb video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        #pip-local video { transform: scaleX(-1); } /* mirror self */
+        .pip-thumb:hover { transform: scale(1.06); box-shadow: 0 10px 32px rgba(0,0,0,0.85); }
+        .pip-thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+        #pip-local video  { transform: scaleX(-1); }          /* mirror self */
         .pip-label {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            padding: 4px 0 5px;
-            background: linear-gradient(transparent, rgba(0,0,0,0.75));
-            text-align: center;
-            font-size: 9px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.95);
-            letter-spacing: 0.03em;
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 3px 0 4px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.65));
+            text-align: center; font-size: 9px; font-weight: 700;
+            color: rgba(255,255,255,0.92); letter-spacing: 0.03em;
             pointer-events: none;
         }
-        .pip-thumb .pip-active-dot {
-            position: absolute;
-            top: 5px; right: 5px;
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: #34c759;
-            box-shadow: 0 0 4px rgba(52,199,89,0.8);
-        }
-
-        /* PIP collapsed state */
-        #pip-panel.collapsed #pip-thumbs { display: none; }
-        #pip-panel.collapsed {
-            width: 50px;
-            min-height: 0;
-            border-radius: 25px;
-        }
-        #pip-panel.collapsed #pip-header {
-            padding: 10px 8px;
-            justify-content: center;
-        }
-        #pip-panel.collapsed #pip-header span { display: none; }
 
         #chat-sidebar {
             width: var(--sidebar-width); background: var(--bg); display: flex; flex-direction: column;
@@ -221,16 +137,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             position: fixed; right: 80px; top: 20px; z-index: 3001; background: var(--accent);
             padding: 10px 20px; border-radius: 20px; display: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; color: white; cursor: pointer; font-weight: bold;
-        }
-
-        /* Chat notification badge */
-        #chat-notif-badge {
-            display: none;
-            position: fixed; right: 76px; top: 16px; z-index: 3002;
-            background: var(--danger); color: white; border-radius: 50%;
-            width: 20px; height: 20px; font-size: 11px; font-weight: 700;
-            align-items: center; justify-content: center;
-            box-shadow: 0 2px 8px rgba(255,59,48,0.5);
         }
 
         .remote-video-wrapper { position: relative; border-radius: 14px; overflow: hidden; min-height: 160px; }
@@ -291,60 +197,13 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* ══ CHAT NOTIFICATION POPUP ══ */
-        #chat-notif-popup {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            z-index: 4600;
-            background: rgba(28,28,30,0.95);
-            backdrop-filter: blur(12px);
-            color: white;
-            border-radius: 16px;
-            padding: 12px 16px;
-            min-width: 220px;
-            max-width: 280px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-            display: none;
-            animation: slideInLeft 0.3s cubic-bezier(0.4,0,0.2,1);
-            cursor: pointer;
-        }
-        @keyframes slideInLeft {
-            from { transform: translateX(-120%); opacity: 0; }
-            to   { transform: translateX(0); opacity: 1; }
-        }
-        #chat-notif-popup .notif-header {
-            font-size: 10px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.5);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 4px;
-        }
-        #chat-notif-popup .notif-name {
-            font-size: 13px;
-            font-weight: 700;
-            color: #5ac8fa;
-            margin-bottom: 3px;
-        }
-        #chat-notif-popup .notif-text {
-            font-size: 14px;
-            line-height: 1.4;
-            color: rgba(255,255,255,0.9);
-        }
-        #chat-notif-popup .notif-tap {
-            font-size: 10px;
-            color: rgba(255,255,255,0.4);
-            margin-top: 6px;
-        }
-
         #custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); display: none; justify-content: center;
             align-items: center; z-index: 4000; backdrop-filter: blur(4px);
         }
         #custom-modal {
-            background: white; padding: 28px 26px; border-radius: 22px; width: 380px;
+            background: white; padding: 28px 26px; border-radius: 22px; width: 350px;
             text-align: center; max-width: 92vw; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
         #custom-modal h3 { margin: 0 0 8px; font-size: 20px; }
@@ -358,61 +217,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             font-family: inherit;
         }
         .modal-field input:focus { border-color: var(--accent); }
-
-        /* Invite link preview */
-        .invite-link-preview {
-            background: #f0f7ff;
-            border: 1.5px solid #cce0ff;
-            border-radius: 12px;
-            padding: 12px 14px;
-            margin-top: 12px;
-            text-align: left;
-        }
-        .invite-link-preview .ilp-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: #007aff;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 5px;
-        }
-        .invite-link-preview .ilp-link {
-            font-size: 12px;
-            color: #333;
-            word-break: break-all;
-            font-family: monospace;
-        }
-        .invite-link-preview .ilp-note {
-            font-size: 11px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        /* Email template preview */
-        .email-preview {
-            background: #fafafa;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 10px 12px;
-            margin-top: 10px;
-            text-align: left;
-            font-size: 12px;
-            color: #555;
-            line-height: 1.5;
-            max-height: 120px;
-            overflow-y: auto;
-        }
-        .email-note {
-            background: #fff8e1;
-            border: 1px solid #ffe082;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 12px;
-            color: #795548;
-            margin-top: 8px;
-            text-align: left;
-            line-height: 1.5;
-        }
 
         .chat-input-area { padding: 10px 12px; background: #fff; display: flex; gap: 8px; border-top: 1px solid #d1d1d6; align-items: center; box-sizing: border-box; min-width: 0; }
         #chat-msg { flex: 1; min-width: 0; border: 1px solid #d1d1d6; border-radius: 20px; padding: 8px 12px; outline: none; font-size: 14px; box-sizing: border-box; }
@@ -431,32 +235,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         .peer-connecting { display: flex; align-items: center; justify-content: center; background: #1a1a1a; color: #888; font-size: 13px; min-height: 160px; }
         .connecting-spinner { width: 28px; height: 28px; border: 3px solid #333; border-top-color: #007aff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 10px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Notification permission banner */
-        #notif-banner {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 4400;
-            background: #1c1c1e;
-            color: white;
-            padding: 12px 20px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        #notif-banner button {
-            background: var(--accent);
-            padding: 5px 16px;
-            margin-left: 12px;
-            font-size: 12px;
-            border-radius: 12px;
-        }
-        #notif-banner .nb-dismiss {
-            background: transparent;
-            color: rgba(255,255,255,0.5);
-            padding: 4px 8px;
-        }
     </style>
 </head>
 <body>
@@ -465,12 +243,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     <span id="join-banner-text">Someone shared a call link with you.</span>
     <button class="btn-blue" onclick="joinFromBanner()">Join Now</button>
     <button class="dismiss" onclick="document.getElementById('join-banner').style.display='none'">✕</button>
-</div>
-
-<div id="notif-banner">
-    🔔 Enable notifications to get alerts when someone messages in chat.
-    <button onclick="requestNotifPerms()">Enable</button>
-    <button class="nb-dismiss" onclick="document.getElementById('notif-banner').style.display='none'">Not now</button>
 </div>
 
 <div id="custom-modal-overlay">
@@ -487,14 +259,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
 <div id="toast"></div>
 
-<!-- Chat notification popup -->
-<div id="chat-notif-popup" onclick="openChatFromNotif()">
-    <div class="notif-header">💬 New Message</div>
-    <div class="notif-name" id="notif-sender-name">Someone</div>
-    <div class="notif-text" id="notif-msg-text"></div>
-    <div class="notif-tap">Tap to open chat →</div>
-</div>
-
 <div id="main-stage">
     <div id="empty-state">
         <div class="empty-icon">📹</div>
@@ -502,21 +266,12 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     </div>
 </div>
 
-<!-- ══ PIP FLOATING PANEL — Zoom/Meet style ══ -->
-<div id="pip-container">
-    <div id="pip-panel">
-        <div id="pip-header">
-            <span>Participants</span>
-            <button id="pip-toggle-btn" onclick="togglePip()">−</button>
-        </div>
-        <div id="pip-thumbs">
-            <!-- local thumb always present -->
-            <div class="pip-thumb" id="pip-local" style="border-color:#007aff;">
-                <video id="local-video" autoplay muted playsinline></video>
-                <div class="pip-label">You</div>
-                <div class="pip-active-dot"></div>
-            </div>
-        </div>
+<!-- PIP strip: you + all peers, bottom-right corner -->
+<div id="pip-strip">
+    <!-- local thumb always present -->
+    <div class="pip-thumb" id="pip-local" style="border-color:#007aff;">
+        <video id="local-video" autoplay muted playsinline></video>
+        <div class="pip-label">You</div>
     </div>
 </div>
 
@@ -528,7 +283,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     <button id="btn-video" class="btn-gray" onclick="toggleVideo()">Stop Video</button>
     <button id="btn-screen" class="btn-blue" onclick="toggleScreen()">Share Screen</button>
     <button class="btn-blue" onclick="showInviteModal()">Invite</button>
-    <button class="btn-blue" onclick="toggleChat(true)" id="btn-chat">Chat</button>
+    <button class="btn-blue" onclick="toggleChat(true)">Chat</button>
     <button class="btn-red" onclick="showEndModal()">End</button>
 </div>
 
@@ -545,7 +300,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 </div>
 
 <button id="restore-chat" onclick="toggleChat(true)">Chat</button>
-<div id="chat-notif-badge" style="display:none;align-items:center;justify-content:center;">0</div>
 
 <div id="chat-sidebar">
     <div id="resizer"></div>
@@ -565,14 +319,10 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     let myStream, myScreen, myId = null, modalAction = null;
     let pendingJoinId = null, streamReady = false, peerReady = false;
     const connections = {}, calls = {}, peerVideoSlots = {}, pipThumbs = {};
-    let unreadCount = 0, chatIsOpen = false;
-    let notifTimer = null;
 
     const sidebar    = document.getElementById('chat-sidebar');
     const resizer    = document.getElementById('resizer');
     const restoreBtn = document.getElementById('restore-chat');
-    const pipPanel   = document.getElementById('pip-panel');
-    let pipCollapsed = false;
 
     const PEER_COLORS = ['#ff3b30','#34c759','#ff9500','#af52de','#ff2d55','#5ac8fa','#ffcc00','#00c7be'];
     const MY_COLOR = '#007aff';
@@ -581,95 +331,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     function getPeerColor(id) {
         if (!peerColorMap[id]) peerColorMap[id] = PEER_COLORS[peerColorIndex++ % PEER_COLORS.length];
         return peerColorMap[id];
-    }
-
-    // ── PIP DRAG ──
-    (function() {
-        const container = document.getElementById('pip-container');
-        let dragging = false, ox = 0, oy = 0;
-        pipPanel.addEventListener('pointerdown', e => {
-            if (e.target.id === 'pip-toggle-btn') return;
-            dragging = true;
-            const rect = container.getBoundingClientRect();
-            ox = e.clientX - rect.left;
-            oy = e.clientY - rect.top;
-            pipPanel.style.cursor = 'grabbing';
-            pipPanel.setPointerCapture(e.pointerId);
-        });
-        pipPanel.addEventListener('pointermove', e => {
-            if (!dragging) return;
-            let nx = e.clientX - ox;
-            let ny = e.clientY - oy;
-            nx = Math.max(0, Math.min(window.innerWidth - container.offsetWidth, nx));
-            ny = Math.max(0, Math.min(window.innerHeight - container.offsetHeight, ny));
-            container.style.left = nx + 'px';
-            container.style.top  = ny + 'px';
-            container.style.right = 'auto';
-            container.style.bottom = 'auto';
-        });
-        pipPanel.addEventListener('pointerup', () => { dragging = false; pipPanel.style.cursor = 'grab'; });
-    })();
-
-    function togglePip() {
-        pipCollapsed = !pipCollapsed;
-        pipPanel.classList.toggle('collapsed', pipCollapsed);
-        document.getElementById('pip-toggle-btn').textContent = pipCollapsed ? '+' : '−';
-    }
-
-    // ── NOTIFICATIONS ──
-    function requestNotifPerms() {
-        if (!('Notification' in window)) { showToast('Notifications not supported in this browser.'); return; }
-        Notification.requestPermission().then(p => {
-            if (p === 'granted') showToast('✅ Notifications enabled!');
-            document.getElementById('notif-banner').style.display = 'none';
-        });
-    }
-
-    function showChatNotif(senderName, text) {
-        // Browser notification
-        if (Notification.permission === 'granted') {
-            const n = new Notification('ZXYsupernova Chat', {
-                body: `${senderName}: ${text}`,
-                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%23007aff"/><text y="44" x="8" font-size="42">💬</text></svg>',
-                tag: 'zxy-chat',
-                silent: false
-            });
-            n.onclick = () => { window.focus(); openChatFromNotif(); };
-        }
-
-        // In-app popup
-        if (!chatIsOpen) {
-            document.getElementById('notif-sender-name').textContent = senderName;
-            document.getElementById('notif-msg-text').textContent = text.length > 80 ? text.slice(0,80) + '…' : text;
-            const popup = document.getElementById('chat-notif-popup');
-            popup.style.display = 'block';
-            clearTimeout(notifTimer);
-            notifTimer = setTimeout(() => { popup.style.display = 'none'; }, 5000);
-
-            // Badge count
-            unreadCount++;
-            const badge = document.getElementById('chat-notif-badge');
-            badge.style.display = 'flex';
-            badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-        }
-
-        // Play notification sound
-        try {
-            const ctx = new AudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-            osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.12, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
-            osc.start(); osc.stop(ctx.currentTime + 0.3);
-        } catch(e) {}
-    }
-
-    function openChatFromNotif() {
-        document.getElementById('chat-notif-popup').style.display = 'none';
-        toggleChat(true);
     }
 
     function showToast(msg, ms=2400) {
@@ -702,13 +363,6 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             banner.style.display = 'block';
         }
         tryAutoJoin();
-
-        // Ask for notification permission after peer is ready
-        if ('Notification' in window && Notification.permission === 'default') {
-            setTimeout(() => {
-                document.getElementById('notif-banner').style.display = 'block';
-            }, 3000);
-        }
     });
 
     peer.on('call', call => { call.answer(myStream); handleCall(call); });
@@ -780,12 +434,10 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         v.autoplay = true; v.playsInline = true;
         const lbl = document.createElement('div');
         lbl.className = 'pip-label'; lbl.textContent = peerId.substring(0,10) + '…';
-        const dot = document.createElement('div');
-        dot.className = 'pip-active-dot';
-        thumb.appendChild(v); thumb.appendChild(lbl); thumb.appendChild(dot);
-        const thumbsContainer = document.getElementById('pip-thumbs');
-        // Insert before local thumb (local stays at bottom)
-        thumbsContainer.insertBefore(thumb, thumbsContainer.firstChild);
+        thumb.appendChild(v); thumb.appendChild(lbl);
+        // Insert before the local thumb (local stays at bottom)
+        const strip = document.getElementById('pip-strip');
+        strip.insertBefore(thumb, strip.firstChild);
         pipThumbs[peerId] = { thumb, video: v };
     }
 
@@ -810,8 +462,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
         call.on('close', () => {
             const slot = peerVideoSlots[call.peer];
-            if (slot) { const v = slot.querySelector('video'); if (v) v.srcObject = null; slot.remove(); }
-            delete peerVideoSlots[call.peer];
+            if (slot) { const v = slot.querySelector('video'); if (v) v.srcObject = null; }
             removePipThumb(call.peer);
             addSysMsg(`🔴 ${call.peer.substring(0,12)}… left`);
             delete calls[call.peer]; updateEmptyState();
@@ -824,10 +475,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         connections[conn.peer] = conn;
         getPeerColor(conn.peer);
         conn.on('data', data => {
-            if (data.type === 'chat') {
-                appendMessage(data.text, 'them', conn.peer);
-                showChatNotif(conn.peer.substring(0,10) + '…', data.text);
-            }
+            if (data.type === 'chat') appendMessage(data.text, 'them', conn.peer);
             if (data.type === 'react') {
                 const r = document.getElementById('re-' + data.id);
                 if (r) r.innerText = data.emoji;
@@ -838,7 +486,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     }
 
     function updateEmptyState() {
-        const has = Object.keys(peerVideoSlots).length > 0;
+        const has = Object.values(peerVideoSlots).some(s => s?.isConnected);
         document.getElementById('empty-state').style.display = has ? 'none' : 'flex';
     }
     function addSysMsg(text) {
@@ -916,20 +564,8 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
     function toggleChat(show) {
         sidebar.classList.add('smooth-width');
-        chatIsOpen = show;
-        if (show) {
-            sidebar.classList.remove('hidden');
-            restoreBtn.style.display = 'none';
-            document.body.classList.add('chat-open');
-            // Clear badge
-            unreadCount = 0;
-            document.getElementById('chat-notif-badge').style.display = 'none';
-            document.getElementById('chat-notif-popup').style.display = 'none';
-        } else {
-            sidebar.classList.add('hidden');
-            restoreBtn.style.display = 'block';
-            document.body.classList.remove('chat-open');
-        }
+        if (show) { sidebar.classList.remove('hidden'); restoreBtn.style.display = 'none'; document.body.classList.add('chat-open'); }
+        else       { sidebar.classList.add('hidden');    restoreBtn.style.display = 'block'; document.body.classList.remove('chat-open'); }
         setTimeout(() => sidebar.classList.remove('smooth-width'), 380);
     }
 
@@ -1015,11 +651,8 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
     function showInviteModal() {
         modalAction = 'invite';
-        document.getElementById('modal-title').innerText = '📨 Invite to Call';
-        document.getElementById('modal-desc').innerText = 'Enter their email — they\'ll receive a link to join your call instantly. No account needed.';
-
-        const joinUrl = window.location.href.split('#')[0] + (myId ? '#' + myId : '');
-
+        document.getElementById('modal-title').innerText = 'Invite a Friend';
+        document.getElementById('modal-desc').innerText = "Enter their email — we'll open a draft with your join link. They just click it to connect.";
         const fw = document.getElementById('modal-fields-wrapper');
         fw.style.display = 'block';
         fw.innerHTML = `
@@ -1030,17 +663,8 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             <div class="modal-field">
                 <label>Your Name <span style="font-weight:400;text-transform:none;font-size:11px;">(so they know who's calling)</span></label>
                 <input type="text" id="invite-from-name" placeholder="Your name" autocomplete="name">
-            </div>
-            <div class="invite-link-preview">
-                <div class="ilp-label">🔗 Join Link (auto-included)</div>
-                <div class="ilp-link">${joinUrl}</div>
-                <div class="ilp-note">Your friend clicks this to join — no setup needed.</div>
-            </div>
-            <div class="email-note">
-                💡 <strong>Tip:</strong> This opens your email app with everything pre-filled — the TO address, subject, and a join link. Your friend can click the link to join instantly.
             </div>`;
-
-        document.getElementById('modal-confirm').innerText = '✉️ Send Invite Email';
+        document.getElementById('modal-confirm').innerText = 'Open Email Draft';
         document.getElementById('custom-modal-overlay').style.display = 'flex';
         setTimeout(() => document.getElementById('invite-to-email')?.focus(), 80);
     }
@@ -1056,34 +680,24 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         } else if (modalAction === 'invite') {
             const toEmail  = (document.getElementById('invite-to-email')?.value  || '').trim();
             const fromName = (document.getElementById('invite-from-name')?.value || '').trim() || 'Someone';
+            const joinUrl  = window.location.href.split('#')[0] + '#' + (myId || '');
 
-            // Build the actual clickable join URL with your peer ID as the hash
-            const joinUrl = window.location.href.split('#')[0] + (myId ? '#' + myId : '');
-
-            const subject = encodeURIComponent(`${fromName} is inviting you to a video call on ZXYsupernova`);
-
-            // The body includes the clickable join link
-            const bodyText =
+            const subject = encodeURIComponent(`${fromName} is inviting you to a video call`);
+            const body = encodeURIComponent(
 `Hey!
 
 ${fromName} is inviting you to join a live video call on ZXYsupernova.
 
-👉 Click this link to join instantly:
+👉 Click this link to join:
 ${joinUrl}
 
-No account needed — just click the link above, allow camera & mic access when prompted, and you'll be connected directly to ${fromName}.
+No account needed — just click, allow camera & mic access, and you're connected instantly.
 
-The link is unique to this call — it works only while the call is active.
+See you there!`);
 
-See you there! 🎉`;
-
-            const body = encodeURIComponent(bodyText);
-
-            // toEmail goes directly into the mailto TO field — no manual copying needed
+            // toEmail goes directly into the mailto TO field
             const mailto = `mailto:${encodeURIComponent(toEmail)}?subject=${subject}&body=${body}`;
             window.open(mailto, '_blank');
-
-            showToast(`📨 Email draft opened for ${toEmail || 'your friend'}!`);
             closeModal();
         }
     }
