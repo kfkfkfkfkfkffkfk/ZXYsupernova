@@ -32,168 +32,65 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
             background: #000; color: var(--text); overflow: hidden;
         }
 
-        /* ── PORTRAIT PHONE: vertical sidebar toolbar on the right ── */
+        /* ── PORTRAIT PHONE ── */
         @media only screen and (max-width: 600px) and (orientation: portrait) {
-            body {
-                display: flex;
-                flex-direction: row;
-            }
-
-            #main-stage {
-                flex: 1;
-                margin-bottom: 0;
-                margin-right: 0;
-                /* leave room for right sidebar toolbar */
-                width: calc(100% - 36px);
-            }
-
-            /* Hide the bottom toolbar on portrait phone */
-            .toolbar {
-                display: none !important;
-            }
-
-            /* Show the vertical sidebar toolbar */
-            #vertical-toolbar {
-                display: flex !important;
-            }
-
+            body { display: flex; flex-direction: row; }
+            #main-stage { flex: 1; margin-bottom: 0; margin-right: 0; width: calc(100% - 36px); }
+            .toolbar { display: none !important; }
+            #vertical-toolbar { display: flex !important; }
             #chat-sidebar {
-                /* On portrait phone, chat sidebar overlays if open */
-                position: fixed;
-                right: 36px; /* sit left of the vertical toolbar */
-                top: 0;
-                bottom: 0;
-                z-index: 200;
-                width: var(--sidebar-width);
-                max-width: calc(100vw - 36px);
+                position: fixed; right: 36px; top: 0; bottom: 0; z-index: 200;
+                width: var(--sidebar-width); max-width: calc(100vw - 36px);
             }
-
-            #chat-sidebar.hidden {
-                transform: translateX(calc(100% + 36px));
-            }
+            #chat-sidebar.hidden { transform: translateX(calc(100% + 36px)); }
         }
 
-        /* ── ALL OTHER LAYOUTS: bottom toolbar ── */
         @media not all and (max-width: 600px) and (orientation: portrait) {
-            body {
-                display: flex;
-                flex-direction: row;
-            }
-
-            #vertical-toolbar {
-                display: none !important;
-            }
+            body { display: flex; flex-direction: row; }
+            #vertical-toolbar { display: none !important; }
         }
 
         /* ─── MAIN STAGE ─── */
         #main-stage {
-            flex-grow: 1;
-            position: relative;
-            background: #111;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 10px;
-            padding: 10px;
-            overflow: hidden;
+            flex-grow: 1; position: relative; background: #111;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px; padding: 10px; overflow: hidden;
             margin-bottom: var(--toolbar-height);
             transition: margin-right 0.35s cubic-bezier(0.4,0,0.2,1);
         }
 
-        /* ─── BOTTOM TOOLBAR (landscape/desktop) ─── */
+        /* ─── BOTTOM TOOLBAR ─── */
         .toolbar {
-            position: fixed;
-            bottom: 14px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 5px;
-            background: rgba(255,255,255,0.88);
-            backdrop-filter: blur(15px);
-            padding: 5px 12px;
-            border-radius: 22px;
-            z-index: 3000;
-            align-items: center;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-            max-width: 92vw;
-            overflow-x: auto;
+            position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 5px;
+            background: rgba(255,255,255,0.88); backdrop-filter: blur(15px);
+            padding: 5px 12px; border-radius: 22px; z-index: 3000;
+            align-items: center; box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            max-width: 92vw; overflow-x: auto;
             transition: left 0.35s cubic-bezier(0.4,0,0.2,1), transform 0.35s cubic-bezier(0.4,0,0.2,1);
         }
+        body.chat-open .toolbar { left: calc(50% - var(--sidebar-width) / 2); }
+        .toolbar button { padding: 5px 10px; font-size: 0.71rem; border-radius: 13px; }
+        .toolbar input { border: 1px solid #ccc; border-radius: 12px; padding: 4px 9px; width: 82px; outline: none; font-size: 0.71rem; }
 
-        body.chat-open .toolbar {
-            left: calc(50% - var(--sidebar-width) / 2);
-        }
-
-        .toolbar button {
-            padding: 5px 10px;
-            font-size: 0.71rem;
-            border-radius: 13px;
-        }
-
-        .toolbar input {
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 4px 9px;
-            width: 82px;
-            outline: none;
-            font-size: 0.71rem;
-        }
-
-        /* ─── VERTICAL SIDEBAR TOOLBAR (portrait phone) ─── */
+        /* ─── VERTICAL TOOLBAR ─── */
         #vertical-toolbar {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            background: rgba(255,255,255,0.92);
-            backdrop-filter: blur(15px);
-            padding: 6px 2px;
-            width: 36px;
-            position: fixed;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 3000;
-            box-shadow: -2px 0 16px rgba(0,0,0,0.18);
-            overflow-y: auto;
-            box-sizing: border-box;
+            display: none; flex-direction: column; align-items: center; gap: 4px;
+            background: rgba(255,255,255,0.92); backdrop-filter: blur(15px);
+            padding: 6px 2px; width: 36px; position: fixed; right: 0; top: 0; bottom: 0;
+            z-index: 3000; box-shadow: -2px 0 16px rgba(0,0,0,0.18); overflow-y: auto; box-sizing: border-box;
         }
-
         #vertical-toolbar .vt-input {
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            transform: rotate(180deg);
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 5px 2px;
-            width: 16px;
-            outline: none;
-            font-size: 8px;
-            background: white;
-            text-align: center;
-            margin: 0;
+            writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+            border: 1px solid #ccc; border-radius: 8px; padding: 5px 2px; width: 16px;
+            outline: none; font-size: 8px; background: white; text-align: center; margin: 0;
         }
-
         #vertical-toolbar .vt-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            font-size: 7px;
-            font-weight: 700;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            line-height: 1.1;
-            padding: 0 1px;
-            box-sizing: border-box;
-            writing-mode: horizontal-tb;
-            word-break: break-word;
-            flex-shrink: 0;
+            width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer;
+            font-size: 7px; font-weight: 700; color: white; display: flex; align-items: center;
+            justify-content: center; text-align: center; line-height: 1.1; padding: 0 1px;
+            box-sizing: border-box; writing-mode: horizontal-tb; word-break: break-word; flex-shrink: 0;
         }
-
         .vt-btn.btn-blue  { background: var(--accent); }
         .vt-btn.btn-red   { background: var(--danger); }
         .vt-btn.btn-green { background: var(--success); }
@@ -201,205 +98,83 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
         /* ─── CHAT SIDEBAR ─── */
         #chat-sidebar {
-            width: var(--sidebar-width);
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-            border-left: 1px solid #d1d1d6;
-            position: relative;
-            z-index: 101;
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0s;
-            flex-shrink: 0;
+            width: var(--sidebar-width); background: var(--bg); display: flex; flex-direction: column;
+            border-left: 1px solid #d1d1d6; position: relative; z-index: 101;
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0s; flex-shrink: 0;
         }
-
-        #chat-sidebar.smooth-width {
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.35s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        #chat-sidebar.hidden {
-            transform: translateX(100%);
-            position: absolute;
-            right: 0;
-            height: 100%;
-        }
-
-        #resizer {
-            width: 8px;
-            cursor: col-resize;
-            position: absolute;
-            left: -4px;
-            top: 0;
-            bottom: 0;
-            z-index: 102;
-        }
-
+        #chat-sidebar.smooth-width { transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.35s cubic-bezier(0.4,0,0.2,1); }
+        #chat-sidebar.hidden { transform: translateX(100%); position: absolute; right: 0; height: 100%; }
+        #resizer { width: 8px; cursor: col-resize; position: absolute; left: -4px; top: 0; bottom: 0; z-index: 102; }
         #restore-chat {
-            position: fixed;
-            right: 80px; /* clear the vertical toolbar */
-            top: 20px;
-            z-index: 3001;
-            background: var(--accent);
-            padding: 10px 20px;
-            border-radius: 20px;
-            display: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
+            position: fixed; right: 80px; top: 20px; z-index: 3001; background: var(--accent);
+            padding: 10px 20px; border-radius: 20px; display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; color: white; cursor: pointer; font-weight: bold;
         }
 
         /* ─── LOCAL VIDEO ─── */
         #local-container {
-            position: absolute;
-            top: 0; left: 0;
-            width: 220px;
-            aspect-ratio: 16/9;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-            z-index: 2000;
-            cursor: grab;
-            background: #000;
-            border: 3px solid #007aff;
-            touch-action: none;
-            will-change: transform;
-            transform: translate3d(20px, 20px, 0);
+            position: absolute; top: 0; left: 0; width: 220px; aspect-ratio: 16/9;
+            border-radius: 12px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            z-index: 2000; cursor: grab; background: #000; border: 3px solid #007aff;
+            touch-action: none; will-change: transform; transform: translate3d(20px, 20px, 0);
         }
         #local-container:active { cursor: grabbing; }
         #local-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); pointer-events: none; }
 
         /* ─── REMOTE VIDEO ─── */
-        .remote-video-wrapper {
-            position: relative;
-            border-radius: 14px;
-            overflow: hidden;
+        .remote-video-wrapper { position: relative; border-radius: 14px; overflow: hidden; }
+        .remote-video { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; background: #222; display: block; }
+
+        /* ─── EMPTY STATE ─── */
+        #empty-state {
+            position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 16px; color: #888;
+            pointer-events: none; z-index: 1;
         }
-        .remote-video {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            border-radius: 11px;
-            background: #222;
-            display: block;
-        }
+        #empty-state .empty-icon { font-size: 64px; opacity: 0.3; }
+        #empty-state p { font-size: 15px; opacity: 0.5; margin: 0; text-align: center; padding: 0 20px; }
 
         /* ─── CHAT MESSAGES ─── */
-        #messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            background: #fff;
-        }
-
+        #messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 25px; background: #fff; }
         .id-system-msg {
-            align-self: center;
-            font-size: 13px;
-            font-weight: 600;
-            color: white;
-            margin: 15px 0;
-            background: var(--accent);
-            padding: 8px 20px;
-            border-radius: 20px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 95%;
+            align-self: center; font-size: 13px; font-weight: 600; color: white; margin: 15px 0;
+            background: var(--accent); padding: 8px 20px; border-radius: 20px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 95%;
         }
-
+        .sys-msg {
+            align-self: center; font-size: 12px; color: #888; background: #f0f0f5;
+            padding: 6px 16px; border-radius: 12px; margin: 4px 0; text-align: center;
+        }
         .msg-wrapper { display: flex; flex-direction: column; max-width: 85%; position: relative; }
         .msg-wrapper.me { align-self: flex-end; align-items: flex-end; }
         .msg-wrapper.them { align-self: flex-start; align-items: flex-start; }
-
         .bubble-container { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; }
         .me .bubble-container { flex-direction: row-reverse; }
-
-        .msg-bubble {
-            padding: 10px 14px;
-            border-radius: 18px;
-            font-size: 16px;
-            line-height: 1.4;
-            word-wrap: break-word;
-            min-width: 30px;
-            color: white;
-        }
+        .msg-bubble { padding: 10px 14px; border-radius: 18px; font-size: 16px; line-height: 1.4; word-wrap: break-word; min-width: 30px; color: white; }
         .me .msg-bubble { border-bottom-right-radius: 4px; }
         .them .msg-bubble { border-bottom-left-radius: 4px; }
 
         /* ─── EMOJI TRAY ─── */
         .msg-actions {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(255,255,255,0.97);
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            padding: 4px 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
-            position: relative;
-            flex-shrink: 0;
-            align-self: flex-start;
+            display: inline-flex; align-items: center; background: rgba(255,255,255,0.97);
+            border: 1px solid #ddd; border-radius: 20px; padding: 4px 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12); position: relative; flex-shrink: 0; align-self: flex-start;
         }
-
-        .emoji-trigger {
-            font-size: 20px;
-            cursor: pointer;
-            padding: 3px;
-            display: inline-flex;
-            align-items: center;
-            user-select: none;
-            flex-shrink: 0;
-            line-height: 1;
-        }
-
+        .emoji-trigger { font-size: 20px; cursor: pointer; padding: 3px; display: inline-flex; align-items: center; user-select: none; flex-shrink: 0; line-height: 1; }
         .emoji-tray {
-            display: inline-flex;
-            align-items: center;
-            max-width: 0;
-            overflow: hidden;
+            display: inline-flex; align-items: center; max-width: 0; overflow: hidden;
             transition: max-width 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
-            opacity: 0;
-            white-space: nowrap;
-            pointer-events: none;
+            opacity: 0; white-space: nowrap; pointer-events: none;
         }
         .emoji-tray.open { max-width: 1400px; opacity: 1; pointer-events: all; }
-
-        .action-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 22px;
-            padding: 3px 4px;
-            color: #333;
-            transition: transform 0.15s ease;
-            line-height: 1;
-            display: inline-flex;
-            align-items: center;
-        }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 22px; padding: 3px 4px; color: #333; transition: transform 0.15s ease; line-height: 1; display: inline-flex; align-items: center; }
         .action-btn:hover { transform: scale(1.4); }
-
-        .util-btns {
-            display: flex;
-            align-items: center;
-            border-left: 1px solid #eee;
-            margin-left: 4px;
-            padding-left: 6px;
-            flex-shrink: 0;
-        }
-
+        .util-btns { display: flex; align-items: center; border-left: 1px solid #eee; margin-left: 4px; padding-left: 6px; flex-shrink: 0; }
         .msg-meta { font-size: 10px; color: #8e8e93; margin-top: 4px; display: flex; gap: 5px; align-items: center; }
         .reaction-badge { font-size: 28px; line-height: 1; }
 
         /* ─── BIG FLOATING REACTION ─── */
-        .big-reaction-popup {
-            position: fixed;
-            font-size: 72px;
-            z-index: 9999;
-            pointer-events: none;
-            animation: bigReactPop 1.8s ease forwards;
-            filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35));
-        }
+        .big-reaction-popup { position: fixed; font-size: 72px; z-index: 9999; pointer-events: none; animation: bigReactPop 1.8s ease forwards; filter: drop-shadow(0 4px 16px rgba(0,0,0,0.35)); }
         @keyframes bigReactPop {
             0%   { transform: scale(0.3) translateY(0); opacity: 1; }
             40%  { transform: scale(1.3) translateY(-30px); opacity: 1; }
@@ -414,42 +189,61 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         .btn-green { background: var(--success); }
         .btn-gray  { background: #444; }
 
+        /* ─── TOAST ─── */
+        #toast {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: rgba(0,0,0,0.85); color: white; padding: 10px 22px; border-radius: 20px;
+            font-size: 13px; font-weight: 600; z-index: 5000; opacity: 0;
+            transition: opacity 0.25s, transform 0.25s; pointer-events: none; white-space: nowrap;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
         /* ─── MODAL ─── */
         #custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); display: none; justify-content: center;
             align-items: center; z-index: 4000; backdrop-filter: blur(4px);
         }
-        #custom-modal { background: white; padding: 25px; border-radius: 20px; width: 320px; text-align: center; }
+        #custom-modal { background: white; padding: 25px; border-radius: 20px; width: 320px; text-align: center; max-width: 90vw; }
 
         /* ─── CHAT INPUT ─── */
-        .chat-input-area {
-            padding: 10px 12px;
-            background: #fff;
-            display: flex;
-            gap: 8px;
-            border-top: 1px solid #d1d1d6;
-            align-items: center;
-            box-sizing: border-box;
-            min-width: 0;
-        }
-        #chat-msg {
-            flex: 1; min-width: 0;
-            border: 1px solid #d1d1d6;
-            border-radius: 20px;
-            padding: 8px 12px;
-            outline: none;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
+        .chat-input-area { padding: 10px 12px; background: #fff; display: flex; gap: 8px; border-top: 1px solid #d1d1d6; align-items: center; box-sizing: border-box; min-width: 0; }
+        #chat-msg { flex: 1; min-width: 0; border: 1px solid #d1d1d6; border-radius: 20px; padding: 8px 12px; outline: none; font-size: 14px; box-sizing: border-box; }
         .chat-input-area button { flex-shrink: 0; white-space: nowrap; padding: 8px 14px; }
 
         .modal-field-container { margin: 15px 0; text-align: left; }
         .modal-field-container label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; margin-left: 5px; }
-        .modal-field-container input { width: 93%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-top: 4px; }
+        .modal-field-container input { width: 93%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-top: 4px; box-sizing: border-box; }
+
+        /* ─── JOIN LINK BANNER ─── */
+        #join-banner {
+            display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 4500;
+            background: linear-gradient(135deg, #007aff, #5ac8fa);
+            color: white; padding: 14px 20px; text-align: center; font-size: 14px; font-weight: 600;
+            box-shadow: 0 2px 20px rgba(0,122,255,0.4);
+        }
+        #join-banner button { background: white; color: #007aff; padding: 6px 18px; margin-left: 12px; font-size: 13px; }
+        #join-banner .dismiss { background: transparent; color: rgba(255,255,255,0.7); font-size: 18px; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); padding: 4px 8px; }
+
+        /* ─── CONNECTION STATUS ─── */
+        .peer-label {
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: white; font-size: 11px; font-weight: 600;
+            padding: 3px 10px; border-radius: 10px; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis;
+        }
+        .peer-connecting { display: flex; align-items: center; justify-content: center; background: #1a1a1a; color: #888; font-size: 13px; min-height: 160px; }
+        .connecting-spinner { width: 28px; height: 28px; border: 3px solid #333; border-top-color: #007aff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 10px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+<!-- Join-from-link banner -->
+<div id="join-banner">
+    <span id="join-banner-text">Someone shared a call link with you.</span>
+    <button class="btn-blue" onclick="joinFromBanner()">Join Now</button>
+    <button class="dismiss" onclick="document.getElementById('join-banner').style.display='none'">✕</button>
+</div>
 
 <div id="custom-modal-overlay">
     <div id="custom-modal">
@@ -457,29 +251,41 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         <p id="modal-desc"></p>
         <div id="modal-fields-wrapper" style="display:none;">
             <div class="modal-field-container" id="container-user-email">
-                <label>Your Email Address (Optional):</label>
-                <input type="email" id="modal-user-email" placeholder="e.g. name@example.com">
+                <label>Your Name (Optional):</label>
+                <input type="text" id="modal-user-email" placeholder="Your Name">
             </div>
             <div class="modal-field-container" id="container-meeting-id">
                 <label>Your Meeting Connection ID:</label>
                 <input type="text" id="modal-input" readonly>
             </div>
+            <div class="modal-field-container" id="container-share-link" style="display:none;">
+                <label>Share this link:</label>
+                <input type="text" id="modal-share-link" readonly onclick="this.select()">
+            </div>
         </div>
-        <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:15px; flex-wrap:wrap;">
             <button class="btn-gray" onclick="closeModal()">Cancel</button>
+            <button class="btn-blue" id="modal-copy-link" style="display:none;" onclick="copyShareLink()">Copy Link</button>
             <button class="btn-blue" id="modal-confirm" onclick="handleModalConfirm()">Confirm</button>
         </div>
     </div>
 </div>
 
-<div id="main-stage"></div>
+<div id="toast"></div>
+
+<div id="main-stage">
+    <div id="empty-state">
+        <div class="empty-icon">📹</div>
+        <p>No one else is here yet.<br>Share your ID or invite someone to join.</p>
+    </div>
+</div>
 <div id="local-container"><video id="local-video" autoplay muted playsinline></video></div>
 
-<!-- BOTTOM toolbar (landscape/desktop) -->
+<!-- BOTTOM toolbar -->
 <div class="toolbar">
-    <input type="text" id="friend-id-input" placeholder="Enter ID">
+    <input type="text" id="friend-id-input" placeholder="Paste peer ID">
     <button class="btn-blue" onclick="joinCall()">Connect</button>
-    <button class="btn-green" style="width:35px;border-radius:50%;padding:8px 0;" onclick="addNewPeer()">+</button>
+    <button class="btn-green" style="width:35px;border-radius:50%;padding:8px 0;" onclick="copyMyId()" title="Copy my ID">⎘</button>
     <button id="btn-mute" class="btn-red" onclick="toggleMute()">Mute</button>
     <button id="btn-video" class="btn-gray" onclick="toggleVideo()">Stop Video</button>
     <button id="btn-screen" class="btn-blue" onclick="toggleScreen()">Share Screen</button>
@@ -492,7 +298,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 <div id="vertical-toolbar">
     <input type="text" id="friend-id-input-v" class="vt-input" placeholder="ID">
     <button class="vt-btn btn-blue"  onclick="joinCallV()">Con&shy;nect</button>
-    <button class="vt-btn btn-green" style="font-size:18px;" onclick="addNewPeer()">+</button>
+    <button class="vt-btn btn-green" onclick="copyMyId()" title="Copy my ID">⎘</button>
     <button id="vbtn-mute"   class="vt-btn btn-red"  onclick="toggleMute()">Mute</button>
     <button id="vbtn-video"  class="vt-btn btn-gray" onclick="toggleVideo()">Stop<br>Vid</button>
     <button id="vbtn-screen" class="vt-btn btn-blue" onclick="toggleScreen()">Scrn</button>
@@ -505,9 +311,9 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
 <div id="chat-sidebar">
     <div id="resizer"></div>
-    <div style="padding:15px; font-weight:bold; border-bottom:1px solid #ddd; display:flex; justify-content:space-between; flex-shrink:0;">
+    <div style="padding:15px; font-weight:bold; border-bottom:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
         Chat
-        <span style="cursor:pointer" onclick="toggleChat(false)">✕</span>
+        <span style="cursor:pointer; font-size:18px;" onclick="toggleChat(false)">✕</span>
     </div>
     <div id="messages"></div>
     <div class="chat-input-area">
@@ -517,16 +323,18 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 </div>
 
 <script>
+    /* ─── PEER SETUP ─── */
     const peer = new Peer();
     let myStream, myScreen, myId = null, modalAction = null;
+    let pendingJoinId = null; // from URL hash, waiting for peer ready + stream ready
+    let streamReady = false, peerReady = false;
     const connections = {}, calls = {};
-    // FIX: track known peer video elements so re-joining reuses the same box
-    const peerVideoSlots = {}; // peerId -> wrapper element
+    const peerVideoSlots = {};
 
-    const sidebar  = document.getElementById('chat-sidebar');
-    const resizer  = document.getElementById('resizer');
+    const sidebar    = document.getElementById('chat-sidebar');
+    const resizer    = document.getElementById('resizer');
     const restoreBtn = document.getElementById('restore-chat');
-    const localBox = document.getElementById('local-container');
+    const localBox   = document.getElementById('local-container');
 
     /* ── PEER COLORS ── */
     const PEER_COLORS = ['#ff3b30','#34c759','#ff9500','#af52de','#ff2d55','#5ac8fa','#ffcc00','#00c7be'];
@@ -535,11 +343,262 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     let peerColorIndex = 0;
 
     function getPeerColor(peerId) {
-        if (!peerColorMap[peerId]) {
-            peerColorMap[peerId] = PEER_COLORS[peerColorIndex % PEER_COLORS.length];
-            peerColorIndex++;
-        }
+        if (!peerColorMap[peerId]) { peerColorMap[peerId] = PEER_COLORS[peerColorIndex++ % PEER_COLORS.length]; }
         return peerColorMap[peerId];
+    }
+
+    /* ── TOAST ── */
+    function showToast(msg, duration=2200) {
+        const t = document.getElementById('toast');
+        t.textContent = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), duration);
+    }
+
+    /* ── CHECK URL HASH (join link) ── */
+    function checkHashAndMaybeJoin() {
+        const hash = window.location.hash.replace('#', '').trim();
+        if (!hash || hash === myId) return;
+        pendingJoinId = hash;
+        tryAutoJoin();
+    }
+
+    function tryAutoJoin() {
+        if (!pendingJoinId) return;
+        if (!streamReady || !peerReady) return; // wait for both
+        if (connections[pendingJoinId] || calls[pendingJoinId]) { pendingJoinId = null; return; } // already connected
+        connectToPeer(pendingJoinId);
+        pendingJoinId = null;
+        // Clean up hash so sharing the tab doesn't loop
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    function joinFromBanner() {
+        const banner = document.getElementById('join-banner');
+        const id = banner.dataset.targetId;
+        banner.style.display = 'none';
+        if (id) connectToPeer(id);
+    }
+
+    /* ── MEDIA ── */
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+        myStream = stream;
+        document.getElementById('local-video').srcObject = stream;
+        streamReady = true;
+        tryAutoJoin();
+    }).catch(err => {
+        showToast('⚠️ Camera/mic access denied. Some features disabled.');
+        streamReady = true; // still try to join (audio-only is fine)
+        tryAutoJoin();
+    });
+
+    peer.on('open', id => {
+        myId = id; peerReady = true;
+        const msg = document.createElement('div');
+        msg.className = 'id-system-msg';
+        msg.innerText = `Your ID: ${id}`;
+        msg.title = 'Click to copy';
+        msg.style.cursor = 'pointer';
+        msg.addEventListener('click', () => copyMyId());
+        document.getElementById('messages').appendChild(msg);
+
+        // Show join banner if hash present
+        const hash = window.location.hash.replace('#', '').trim();
+        if (hash && hash !== id) {
+            const banner = document.getElementById('join-banner');
+            banner.dataset.targetId = hash;
+            document.getElementById('join-banner-text').textContent = `Join call? (Host ID: ${hash.substring(0,8)}…)`;
+            banner.style.display = 'block';
+        }
+
+        tryAutoJoin();
+    });
+
+    peer.on('call', call => { call.answer(myStream); handleCall(call); });
+    peer.on('connection', conn => setupChat(conn));
+
+    peer.on('error', err => {
+        console.error('PeerJS error:', err);
+        if (err.type === 'peer-unavailable') showToast('❌ Peer not found. Check the ID.');
+        else showToast('⚠️ Connection error: ' + err.type);
+    });
+
+    /* ── COPY MY ID ── */
+    function copyMyId() {
+        if (!myId) return;
+        navigator.clipboard.writeText(myId).then(() => showToast('✅ Your ID copied!')).catch(() => {
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = myId; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); ta.remove(); showToast('✅ Your ID copied!');
+        });
+    }
+
+    /* ── CONNECT ── */
+    function connectToPeer(id) {
+        if (!id) return;
+        if (!myStream && !streamReady) { showToast('Waiting for camera…'); return; }
+        // Deduplicate
+        if (calls[id]) { showToast('Already connected to this peer.'); return; }
+        addSysMsg(`Connecting to ${id.substring(0,8)}…`);
+        handleCall(peer.call(id, myStream));
+        const conn = peer.connect(id);
+        setupChat(conn);
+    }
+
+    function joinCall() {
+        const id = document.getElementById('friend-id-input').value.trim();
+        if (!id) { showToast('Paste a peer ID first.'); return; }
+        document.getElementById('friend-id-input').value = '';
+        connectToPeer(id);
+    }
+
+    function joinCallV() {
+        const id = document.getElementById('friend-id-input-v').value.trim();
+        if (!id) { showToast('Paste a peer ID first.'); return; }
+        document.getElementById('friend-id-input-v').value = '';
+        connectToPeer(id);
+    }
+
+    /* ── CALL HANDLING ── */
+    function getOrCreateVideoSlot(peerId) {
+        const color = getPeerColor(peerId);
+        if (peerVideoSlots[peerId]) return peerVideoSlots[peerId];
+        document.getElementById('empty-state').style.display = 'none';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'remote-video-wrapper';
+        wrapper.id = `vw-${peerId}`;
+        wrapper.style.border = `3px solid ${color}`;
+        wrapper.style.borderRadius = '14px';
+        wrapper.style.minHeight = '160px';
+        wrapper.innerHTML = `<div class="peer-connecting"><div class="connecting-spinner"></div>Connecting…</div>`;
+        const v = document.createElement('video');
+        v.id = `v-${peerId}`; v.className = 'remote-video';
+        v.autoplay = true; v.playsInline = true;
+        const label = document.createElement('div');
+        label.className = 'peer-label';
+        label.textContent = peerId.substring(0, 12) + '…';
+        wrapper.appendChild(v);
+        wrapper.appendChild(label);
+        document.getElementById('main-stage').appendChild(wrapper);
+        peerVideoSlots[peerId] = wrapper;
+        return wrapper;
+    }
+
+    function handleCall(call) {
+        calls[call.peer] = call;
+        getPeerColor(call.peer);
+        getOrCreateVideoSlot(call.peer); // show "connecting" box immediately
+
+        call.on('stream', stream => {
+            const slot = getOrCreateVideoSlot(call.peer);
+            // Remove spinner
+            const spinner = slot.querySelector('.peer-connecting');
+            if (spinner) spinner.remove();
+            const v = slot.querySelector('video');
+            v.srcObject = stream;
+            addSysMsg(`🟢 ${call.peer.substring(0,8)}… joined`);
+            showToast('🟢 Peer connected!');
+        });
+
+        call.on('close', () => {
+            const slot = peerVideoSlots[call.peer];
+            if (slot) { const v = slot.querySelector('video'); if (v) v.srcObject = null; }
+            addSysMsg(`🔴 ${call.peer.substring(0,8)}… left`);
+            delete calls[call.peer];
+            updateEmptyState();
+        });
+
+        call.on('error', (e) => {
+            const slot = peerVideoSlots[call.peer];
+            if (slot) { const v = slot.querySelector('video'); if (v) v.srcObject = null; }
+            delete calls[call.peer];
+            updateEmptyState();
+        });
+    }
+
+    function setupChat(conn) {
+        connections[conn.peer] = conn;
+        getPeerColor(conn.peer);
+
+        conn.on('data', data => {
+            if (data.type === 'chat') appendMessage(data.text, 'them', conn.peer);
+            if (data.type === 'react') {
+                const r = document.getElementById('re-' + data.id);
+                if (r) r.innerText = data.emoji;
+                showBigReaction(data.emoji);
+            }
+        });
+
+        conn.on('close', () => { delete connections[conn.peer]; });
+    }
+
+    function updateEmptyState() {
+        const hasVideos = Object.keys(peerVideoSlots).some(id => {
+            const slot = peerVideoSlots[id];
+            return slot && slot.isConnected;
+        });
+        document.getElementById('empty-state').style.display = hasVideos ? 'none' : 'flex';
+    }
+
+    function addSysMsg(text) {
+        const el = document.createElement('div');
+        el.className = 'sys-msg'; el.textContent = text;
+        document.getElementById('messages').appendChild(el);
+        document.getElementById('messages').scrollTop = 99999;
+    }
+
+    /* ── MESSAGES ── */
+    function appendMessage(text, side, peerId) {
+        const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2,5);
+        const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const wrapper = document.createElement('div');
+        wrapper.className = `msg-wrapper ${side}`;
+        const bubbleColor = (side === 'me') ? MY_COLOR : (peerId ? getPeerColor(peerId) : '#8e8e93');
+        const emojiList = ['😭','⏰','📚','🌐','📆','🤔','😈','😂','👏','🖐','🎉','💧','🔮','😀','😆','👋','🧻','🔥','✨','🚀','💯'];
+        const emojiButtons = emojiList.map(e => `<button class="action-btn" data-emoji="${e}">${e}</button>`).join('');
+        wrapper.innerHTML = `
+            <div class="bubble-container">
+                <div class="msg-bubble" id="${msgId}" style="background:${bubbleColor};">${text}</div>
+                <div class="msg-actions" data-msgid="${msgId}">
+                    <span class="emoji-trigger" title="React">😊</span>
+                    <div class="emoji-tray">${emojiButtons}</div>
+                    <div class="util-btns"><button class="action-btn" title="Copy">❐</button></div>
+                </div>
+            </div>
+            <div class="msg-meta"><span>${time}</span> <span id="re-${msgId}" class="reaction-badge"></span></div>
+        `;
+        const msgActionsEl = wrapper.querySelector('.msg-actions');
+        const tray = wrapper.querySelector('.emoji-tray');
+        const trigger = wrapper.querySelector('.emoji-trigger');
+        const copyBtn = wrapper.querySelector('.util-btns .action-btn');
+        trigger.addEventListener('click', () => reactTo(msgId, '😊'));
+        msgActionsEl.addEventListener('mouseenter', () => { clearTimeout(collapseTimer); openEmojiTray(tray); });
+        msgActionsEl.addEventListener('mouseleave', () => scheduleClose(tray));
+        tray.addEventListener('mouseenter', () => clearTimeout(collapseTimer));
+        tray.addEventListener('mouseleave', () => scheduleClose(tray));
+        tray.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', () => { reactTo(msgId, btn.dataset.emoji); closeEmojiTray(tray); });
+        });
+        copyBtn.addEventListener('click', () => navigator.clipboard.writeText(document.getElementById(msgId).innerText));
+        document.getElementById('messages').appendChild(wrapper);
+        document.getElementById('messages').scrollTop = 99999;
+        return msgId;
+    }
+
+    function reactTo(id, emoji) {
+        const el = document.getElementById('re-' + id);
+        if (el) {
+            el.innerText = emoji; showBigReaction(emoji);
+            Object.values(connections).forEach(c => { try { c.send({ type: 'react', id, emoji }); } catch(e){} });
+        }
+    }
+
+    function sendChatMessage() {
+        const text = document.getElementById('chat-msg').value.trim();
+        if (!text) return;
+        Object.values(connections).forEach(c => { try { c.send({ type: 'chat', text }); } catch(e){} });
+        appendMessage(text, 'me', null);
+        document.getElementById('chat-msg').value = '';
     }
 
     /* ── DRAG (local video) ── */
@@ -564,7 +623,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
     function dragMove(e) {
         if (!activeDragging) return; e.preventDefault();
         const now = performance.now(), dt = now - lastTime;
-        if (dt > 0) { velocityX = (e.clientX - lastX) / dt; velocityY = (e.clientY - lastY) / dt; lastTime = now; lastX = e.clientX; lastY = e.clientY; }
+        if (dt > 0) { velocityX = (e.clientX - lastX)/dt; velocityY = (e.clientY - lastY)/dt; lastTime = now; lastX = e.clientX; lastY = e.clientY; }
         currentX = e.clientX - initialX; currentY = e.clientY - initialY;
         clampAndApply();
     }
@@ -656,7 +715,7 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         document.documentElement.style.setProperty('--sidebar-width', baseSidebarWidth + 'px');
     }
 
-    /* ── BIG REACTION (local only) ── */
+    /* ── BIG REACTION ── */
     function showBigReaction(emoji) {
         const el = document.createElement('div');
         el.className = 'big-reaction-popup'; el.textContent = emoji;
@@ -669,174 +728,11 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         setTimeout(() => el.remove(), 1900);
     }
 
-    /* ── PEER SETUP ── */
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-        myStream = stream;
-        document.getElementById('local-video').srcObject = stream;
-    });
-
-    peer.on('open', id => {
-        myId = id;
-        const msg = document.createElement('div');
-        msg.className = 'id-system-msg';
-        msg.innerText = `Your ID: ${id}`;
-        document.getElementById('messages').appendChild(msg);
-    });
-
-    peer.on('call', call => { call.answer(myStream); handleCall(call); });
-    peer.on('connection', conn => setupChat(conn));
-
-    /* ── MESSAGES ── */
-    function appendMessage(text, side, peerId) {
-        const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2,5);
-        const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-        const wrapper = document.createElement('div');
-        wrapper.className = `msg-wrapper ${side}`;
-        const bubbleColor = (side === 'me') ? MY_COLOR : (peerId ? getPeerColor(peerId) : '#8e8e93');
-
-        const emojiList = ['😭','⏰','📚','🌐','📆','🤔','😈','😂','👏','🖐','🎉','💧','🔮','😀','😆','👋','🧻','🔥','✨','🚀','💯'];
-        const emojiButtons = emojiList.map(e => `<button class="action-btn" data-emoji="${e}">${e}</button>`).join('');
-
-        wrapper.innerHTML = `
-            <div class="bubble-container">
-                <div class="msg-bubble" id="${msgId}" style="background:${bubbleColor};">${text}</div>
-                <div class="msg-actions" data-msgid="${msgId}">
-                    <span class="emoji-trigger" title="React">😊</span>
-                    <div class="emoji-tray">${emojiButtons}</div>
-                    <div class="util-btns"><button class="action-btn" title="Copy">❐</button></div>
-                </div>
-            </div>
-            <div class="msg-meta"><span>${time}</span> <span id="re-${msgId}" class="reaction-badge"></span></div>
-        `;
-
-        const msgActionsEl = wrapper.querySelector('.msg-actions');
-        const tray = wrapper.querySelector('.emoji-tray');
-        const trigger = wrapper.querySelector('.emoji-trigger');
-        const copyBtn = wrapper.querySelector('.util-btns .action-btn');
-
-        trigger.addEventListener('click', () => reactTo(msgId, '😊'));
-        msgActionsEl.addEventListener('mouseenter', () => { clearTimeout(collapseTimer); openEmojiTray(tray); });
-        msgActionsEl.addEventListener('mouseleave', () => scheduleClose(tray));
-        tray.addEventListener('mouseenter', () => clearTimeout(collapseTimer));
-        tray.addEventListener('mouseleave', () => scheduleClose(tray));
-        tray.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('click', () => { reactTo(msgId, btn.dataset.emoji); closeEmojiTray(tray); });
-        });
-        copyBtn.addEventListener('click', () => navigator.clipboard.writeText(document.getElementById(msgId).innerText));
-
-        document.getElementById('messages').appendChild(wrapper);
-        document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
-        return msgId;
-    }
-
-    function reactTo(id, emoji) {
-        const el = document.getElementById('re-' + id);
-        if (el) {
-            el.innerText = emoji;
-            showBigReaction(emoji);
-            // Broadcast: send both the badge update AND the float popup to all peers
-            Object.values(connections).forEach(c => {
-                try { c.send({ type: 'react', id, emoji }); } catch(e){}
-            });
-        }
-    }
-
-    function sendChatMessage() {
-        const text = document.getElementById('chat-msg').value.trim();
-        if (!text) return;
-        Object.values(connections).forEach(c => { try { c.send({ type: 'chat', text }); } catch(e){} });
-        appendMessage(text, 'me', null);
-        document.getElementById('chat-msg').value = '';
-    }
-
-    /* ── CALL HANDLING: reuse existing video slot on reconnect ── */
-    function getOrCreateVideoSlot(peerId) {
-        const color = getPeerColor(peerId);
-        if (peerVideoSlots[peerId]) {
-            // Reuse existing wrapper
-            return peerVideoSlots[peerId];
-        }
-        const wrapper = document.createElement('div');
-        wrapper.className = 'remote-video-wrapper';
-        wrapper.id = `vw-${peerId}`;
-        wrapper.style.border = `3px solid ${color}`;
-        wrapper.style.borderRadius = '14px';
-        const v = document.createElement('video');
-        v.id = `v-${peerId}`; v.className = 'remote-video';
-        v.autoplay = true; v.playsInline = true;
-        wrapper.appendChild(v);
-        document.getElementById('main-stage').appendChild(wrapper);
-        peerVideoSlots[peerId] = wrapper;
-        return wrapper;
-    }
-
-    function joinCall() {
-        const id = document.getElementById('friend-id-input').value.trim();
-        if (!id) return;
-        handleCall(peer.call(id, myStream));
-        const conn = peer.connect(id);
-        setupChat(conn);
-    }
-
-    function joinCallV() {
-        const id = document.getElementById('friend-id-input-v').value.trim();
-        if (!id) return;
-        handleCall(peer.call(id, myStream));
-        const conn = peer.connect(id);
-        setupChat(conn);
-    }
-
-    function handleCall(call) {
-        calls[call.peer] = call;
-        getPeerColor(call.peer); // ensure color assigned
-
-        call.on('stream', stream => {
-            const slot = getOrCreateVideoSlot(call.peer);
-            const v = slot.querySelector('video');
-            v.srcObject = stream;
-        });
-
-        call.on('close', () => {
-            // Don't remove the slot — keep it in DOM for reconnect
-            // Just blank the video source so the box stays reserved
-            const slot = peerVideoSlots[call.peer];
-            if (slot) {
-                const v = slot.querySelector('video');
-                if (v) v.srcObject = null;
-            }
-        });
-
-        call.on('error', () => {
-            const slot = peerVideoSlots[call.peer];
-            if (slot) { const v = slot.querySelector('video'); if (v) v.srcObject = null; }
-        });
-    }
-
-    function setupChat(conn) {
-        connections[conn.peer] = conn;
-        getPeerColor(conn.peer);
-
-        conn.on('data', data => {
-            if (data.type === 'chat') {
-                appendMessage(data.text, 'them', conn.peer);
-            }
-            if (data.type === 'react') {
-                // Show the badge on any message that exists locally with that id
-                const r = document.getElementById('re-' + data.id);
-                if (r) r.innerText = data.emoji;
-                // Always show the big floating reaction so the other side sees it
-                showBigReaction(data.emoji);
-            }
-        });
-
-        conn.on('close', () => { delete connections[conn.peer]; });
-    }
-
     /* ── CONTROLS ── */
     function toggleMute() {
         if (!myStream) return;
-        const enabled = myStream.getAudioTracks()[0].enabled;
-        myStream.getAudioTracks()[0].enabled = !enabled;
+        const enabled = myStream.getAudioTracks()[0]?.enabled;
+        if (myStream.getAudioTracks()[0]) myStream.getAudioTracks()[0].enabled = !enabled;
         const label = !enabled ? "Mute" : "Unmute";
         document.getElementById('btn-mute').innerText = label;
         const vb = document.getElementById('vbtn-mute'); if (vb) vb.innerText = label;
@@ -844,8 +740,8 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
 
     function toggleVideo() {
         if (!myStream) return;
-        const enabled = myStream.getVideoTracks()[0].enabled;
-        myStream.getVideoTracks()[0].enabled = !enabled;
+        const enabled = myStream.getVideoTracks()[0]?.enabled;
+        if (myStream.getVideoTracks()[0]) myStream.getVideoTracks()[0].enabled = !enabled;
         const label = !enabled ? "Stop Video" : "Start Video";
         document.getElementById('btn-video').innerText = label;
         const vb = document.getElementById('vbtn-video'); if (vb) vb.innerHTML = !enabled ? "Stop<br>Vid" : "Start<br>Vid";
@@ -855,30 +751,24 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         const btn = document.getElementById('btn-screen');
         const vbtn = document.getElementById('vbtn-screen');
         if (myScreen) {
-            myScreen.getTracks().forEach(t => t.stop());
-            myScreen = null;
+            myScreen.getTracks().forEach(t => t.stop()); myScreen = null;
             btn.innerText = "Share Screen"; btn.className = "btn-blue";
             if (vbtn) { vbtn.innerText = "Scrn"; vbtn.className = "vt-btn btn-blue"; }
-            if (myStream) {
-                const vt = myStream.getVideoTracks()[0];
-                replacePeerTrack(vt);
-                document.getElementById('local-video').srcObject = myStream;
-            }
+            if (myStream) { replacePeerTrack(myStream.getVideoTracks()[0]); document.getElementById('local-video').srcObject = myStream; }
         } else {
             if (!navigator.mediaDevices.getDisplayMedia) { alert("Screen sharing not supported."); return; }
             navigator.mediaDevices.getDisplayMedia({ video: true, audio: false }).then(stream => {
-                myScreen = stream;
-                btn.innerText = "Stop Sharing"; btn.className = "btn-red";
+                myScreen = stream; btn.innerText = "Stop Sharing"; btn.className = "btn-red";
                 if (vbtn) { vbtn.innerText = "Stop"; vbtn.className = "vt-btn btn-red"; }
                 const st = stream.getVideoTracks()[0];
                 st.onended = () => { if (myScreen) toggleScreen(); };
-                replacePeerTrack(st);
-                document.getElementById('local-video').srcObject = stream;
+                replacePeerTrack(st); document.getElementById('local-video').srcObject = stream;
             }).catch(err => console.error("Screen share error:", err));
         }
     }
 
     function replacePeerTrack(track) {
+        if (!track) return;
         Object.values(peer.connections).forEach(list => {
             list.forEach(conn => {
                 if (conn.peerConnection) {
@@ -889,51 +779,66 @@ if('serviceWorker' in navigator){var sw="self.addEventListener('install',e=>self
         });
     }
 
+    /* ── MODALS ── */
     function showEndModal() {
         modalAction = 'endCall';
         document.getElementById('modal-title').innerText = "End Meeting?";
         document.getElementById('modal-desc').innerText = "Are you sure you want to end this call?";
         document.getElementById('modal-fields-wrapper').style.display = "none";
+        document.getElementById('modal-copy-link').style.display = "none";
         document.getElementById('custom-modal-overlay').style.display = "flex";
     }
 
     function showInviteModal() {
         modalAction = 'invite';
-        document.getElementById('modal-title').innerText = "Email Invitation Setup";
-        document.getElementById('modal-desc').innerText = "Press confirm to create your mailto link containing your join code details.";
+        const shareUrl = window.location.href.split('#')[0] + '#' + (myId || '');
+        document.getElementById('modal-title').innerText = "Invite Someone";
+        document.getElementById('modal-desc').innerText = "Share your link or ID. They open it and will auto-join.";
         document.getElementById('modal-fields-wrapper').style.display = "block";
         document.getElementById('container-user-email').style.display = "block";
-        document.getElementById('modal-input').value = myId || "Generating ID...";
+        document.getElementById('container-share-link').style.display = "block";
+        document.getElementById('modal-input').value = myId || "Generating…";
+        document.getElementById('modal-share-link').value = shareUrl;
+        document.getElementById('modal-copy-link').style.display = "inline-block";
         document.getElementById('custom-modal-overlay').style.display = "flex";
+    }
+
+    function copyShareLink() {
+        const link = document.getElementById('modal-share-link').value;
+        navigator.clipboard.writeText(link).then(() => showToast('✅ Link copied!')).catch(() => {
+            document.getElementById('modal-share-link').select();
+            document.execCommand('copy'); showToast('✅ Link copied!');
+        });
     }
 
     function handleModalConfirm() {
         if (modalAction === 'endCall') {
             Object.values(connections).forEach(c => { try { c.close(); } catch(e){} });
             Object.values(calls).forEach(c => { try { c.close(); } catch(e){} });
-            // Clear video slots
-            Object.keys(peerVideoSlots).forEach(id => {
-                const slot = peerVideoSlots[id];
-                if (slot) slot.remove();
-                delete peerVideoSlots[id];
-            });
-            closeModal();
+            Object.keys(peerVideoSlots).forEach(id => { const s = peerVideoSlots[id]; if (s) s.remove(); delete peerVideoSlots[id]; });
+            updateEmptyState(); closeModal();
         } else if (modalAction === 'invite') {
             const userEmail = document.getElementById('modal-user-email').value.trim();
             const senderIdentity = userEmail.length > 0 ? userEmail : "Someone";
-            const joinUrl = window.location.href.split('#')[0] + '#' + myId;
+            const shareUrl = document.getElementById('modal-share-link').value;
             const subject = encodeURIComponent(`${senderIdentity} is inviting you to a call`);
-            const body = encodeURIComponent(`Hey!\n\n${senderIdentity} invited you to a video call.\n\n🔑 Connection ID: ${myId}\n👉 Join link: ${joinUrl}\n\nNo sign-up needed. Just click, allow camera & mic access.\n\nSee you there!`);
+            const body = encodeURIComponent(`Hey!\n\n${senderIdentity} invited you to a video call.\n\n🔑 Connection ID: ${myId}\n👉 Join link (auto-connects): ${shareUrl}\n\nNo sign-up needed. Just click the link, allow camera & mic, and you'll connect automatically.\n\nSee you there!`);
             window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
             closeModal();
         }
     }
 
     function closeModal() { document.getElementById('custom-modal-overlay').style.display = "none"; }
-    function addNewPeer() { /* placeholder */ }
+    function addNewPeer() { /* multi-peer placeholder */ }
 
     document.getElementById('chat-msg').addEventListener("keypress", e => { if (e.key === "Enter") sendChatMessage(); });
     window.addEventListener('resize', adjustLocalBoxBoundary);
+
+    // Handle hash changes (someone shares the page URL with a hash)
+    window.addEventListener('hashchange', checkHashAndMaybeJoin);
+
+    // Initial check (page load with hash already present)
+    // Defer until after peer opens — handled in tryAutoJoin
 </script>
 </body>
 </html>
