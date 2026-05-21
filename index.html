@@ -122,8 +122,8 @@ body.chat-open .toolbar { left: calc(50% - var(--sidebar-width) / 2); }
 #empty-state .empty-icon { font-size: 64px; opacity: 0.3; }
 #empty-state p { font-size: 15px; opacity: 0.5; margin: 0; text-align: center; padding: 0 20px; }
 /* ─── CHAT MESSAGES ─── */
-#messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 25px; background: #fff; }
-/* ── MY ID BADGE (click to copy) ── */
+#messages { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
+/* ── MY ID BADGE ── */
 .id-system-msg {
   align-self: center; font-size: 13px; font-weight: 600; color: white; margin: 15px 0;
   background: var(--accent); padding: 8px 20px; border-radius: 20px;
@@ -134,32 +134,114 @@ body.chat-open .toolbar { left: calc(50% - var(--sidebar-width) / 2); }
   align-self: center; font-size: 12px; color: #888; background: #f0f0f5;
   padding: 6px 16px; border-radius: 12px; margin: 4px 0; text-align: center;
 }
-.msg-wrapper { display: flex; flex-direction: column; max-width: 85%; position: relative; }
+/* ─── MESSAGE WRAPPER ─── */
+.msg-wrapper {
+  display: flex; flex-direction: column; max-width: 85%; position: relative;
+  /* CRITICAL: min-height prevents layout shift when actions appear/disappear */
+  min-height: fit-content;
+}
 .msg-wrapper.me { align-self: flex-end; align-items: flex-end; }
 .msg-wrapper.them { align-self: flex-start; align-items: flex-start; }
-.bubble-container { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; }
-.me .bubble-container { flex-direction: row-reverse; }
-.msg-bubble { padding: 10px 14px; border-radius: 18px; font-size: 16px; line-height: 1.4; word-wrap: break-word; min-width: 30px; color: white; }
+
+/* ─── BUBBLE ROW (bubble + actions side by side) ─── */
+.bubble-row {
+  display: flex; align-items: flex-start; gap: 6px; width: 100%;
+  position: relative;
+}
+.me .bubble-row { flex-direction: row-reverse; }
+
+/* ─── BUBBLE ─── */
+.msg-bubble {
+  padding: 10px 14px; border-radius: 18px; font-size: 16px; line-height: 1.4;
+  word-wrap: break-word; word-break: break-word; min-width: 30px; color: white;
+  /* Key: no width constraint changes, no flex-shrink shenanigans */
+  flex-shrink: 0; max-width: 100%;
+}
 .me .msg-bubble { border-bottom-right-radius: 4px; }
 .them .msg-bubble { border-bottom-left-radius: 4px; }
-/* ─── EMOJI TRAY ─── */
+
+/* ─── HOVER ACTIONS PANEL ─── */
 .msg-actions {
-  display: inline-flex; align-items: center; background: rgba(255,255,255,0.97);
-  border: 1px solid #ddd; border-radius: 20px; padding: 4px 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.12); position: relative; flex-shrink: 0; align-self: flex-start;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0; align-self: flex-start; padding-top: 2px;
 }
-.emoji-trigger { font-size: 20px; cursor: pointer; padding: 3px; display: inline-flex; align-items: center; user-select: none; flex-shrink: 0; line-height: 1; }
-.emoji-tray {
-  display: inline-flex; align-items: center; max-width: 0; overflow: hidden;
-  transition: max-width 0.45s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
-  opacity: 0; white-space: nowrap; pointer-events: none;
+/* Show actions on wrapper hover - use a slightly larger hover target */
+.msg-wrapper:hover .msg-actions { opacity: 1; pointer-events: all; }
+.msg-actions:hover { opacity: 1; pointer-events: all; } /* stay visible when hovering actions */
+
+.action-icon-btn {
+  background: rgba(255,255,255,0.95); border: 1px solid #e0e0e0;
+  border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; font-size: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12); transition: transform 0.12s ease, background 0.1s;
+  flex-shrink: 0;
 }
-.emoji-tray.open { max-width: 1400px; opacity: 1; pointer-events: all; }
-.action-btn { background: none; border: none; cursor: pointer; font-size: 22px; padding: 3px 4px; color: #333; transition: transform 0.15s ease; line-height: 1; display: inline-flex; align-items: center; }
-.action-btn:hover { transform: scale(1.4); }
-.util-btns { display: flex; align-items: center; border-left: 1px solid #eee; margin-left: 4px; padding-left: 6px; flex-shrink: 0; }
-.msg-meta { font-size: 10px; color: #8e8e93; margin-top: 4px; display: flex; gap: 5px; align-items: center; }
-.reaction-badge { font-size: 28px; line-height: 1; }
+.action-icon-btn:hover { transform: scale(1.15); background: #f0f0f5; }
+
+/* ─── EMOJI PICKER POPUP ─── */
+.emoji-picker-popup {
+  position: absolute; z-index: 500;
+  background: rgba(255,255,255,0.98); border: 1px solid #ddd;
+  border-radius: 20px; padding: 6px 10px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+  display: flex; flex-wrap: wrap; gap: 2px; max-width: 260px;
+  opacity: 0; pointer-events: none; transform: scale(0.85) translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.emoji-picker-popup.open { opacity: 1; pointer-events: all; transform: scale(1) translateY(0); }
+.me .emoji-picker-popup { right: 36px; top: 0; }
+.them .emoji-picker-popup { left: 36px; top: 0; }
+.ep-emoji { font-size: 22px; cursor: pointer; padding: 3px; border-radius: 8px;
+  transition: transform 0.1s ease, background 0.1s; line-height: 1; }
+.ep-emoji:hover { transform: scale(1.3); background: #f0f0f5; }
+
+/* ─── EDIT POPUP ─── */
+.edit-popup {
+  position: absolute; z-index: 501;
+  background: white; border: 1px solid #ddd; border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.15); padding: 8px;
+  display: flex; gap: 6px; align-items: center;
+  opacity: 0; pointer-events: none; transform: scale(0.9);
+  transition: opacity 0.15s, transform 0.15s; min-width: 180px;
+}
+.edit-popup.open { opacity: 1; pointer-events: all; transform: scale(1); }
+.me .edit-popup { right: 36px; top: 30px; }
+.them .edit-popup { left: 36px; top: 30px; }
+.edit-popup input { flex: 1; border: 1px solid #ddd; border-radius: 8px; padding: 5px 8px;
+  font-size: 13px; outline: none; min-width: 0; }
+.edit-popup button { border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer;
+  font-size: 12px; font-weight: 600; color: white; white-space: nowrap; }
+
+/* ─── META ROW ─── */
+.msg-meta {
+  font-size: 10px; color: #8e8e93; margin-top: 3px;
+  display: flex; gap: 5px; align-items: center;
+  /* Fixed height so it doesn't cause layout shift */
+  min-height: 16px;
+}
+.reaction-badge { font-size: 18px; line-height: 1; cursor: default; }
+.edited-label { font-size: 10px; color: #aaa; font-style: italic; }
+
+/* ─── FILE ATTACHMENT IN BUBBLE ─── */
+.attach-preview {
+  margin-top: 6px; border-radius: 10px; overflow: hidden;
+  max-width: 220px; background: rgba(255,255,255,0.15);
+}
+.attach-preview img { display: block; max-width: 100%; max-height: 200px; border-radius: 10px; object-fit: cover; }
+.attach-preview video { display: block; max-width: 100%; max-height: 160px; border-radius: 10px; }
+.attach-preview audio { display: block; width: 100%; margin-top: 4px; }
+.attach-file-link {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  background: rgba(255,255,255,0.18); border-radius: 10px; text-decoration: none;
+  color: white; font-size: 13px; font-weight: 500;
+}
+.attach-file-link .file-icon { font-size: 24px; flex-shrink: 0; }
+.attach-file-link .file-info { overflow: hidden; }
+.attach-file-link .file-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.attach-file-link .file-size { font-size: 10px; opacity: 0.7; }
+
 /* ─── BIG FLOATING REACTION ─── */
 .big-reaction-popup {
   position: fixed; font-size: 72px; z-index: 9999; pointer-events: none;
@@ -193,13 +275,31 @@ button { border: none; color: white; padding: 8px 16px; border-radius: 18px; fon
   z-index: 4000; backdrop-filter: blur(4px);
 }
 #custom-modal { background: white; padding: 25px; border-radius: 20px; width: 320px; text-align: center; max-width: 90vw; }
-/* ─── CHAT INPUT ─── */
+/* ─── CHAT INPUT AREA ─── */
 .chat-input-area {
-  padding: 10px 12px; background: #fff; display: flex; gap: 8px;
-  border-top: 1px solid #d1d1d6; align-items: center; box-sizing: border-box; min-width: 0;
+  padding: 10px 12px; background: #fff; display: flex; flex-direction: column; gap: 6px;
+  border-top: 1px solid #d1d1d6; box-sizing: border-box; min-width: 0;
 }
+.chat-input-row { display: flex; gap: 8px; align-items: center; }
 #chat-msg { flex: 1; min-width: 0; border: 1px solid #d1d1d6; border-radius: 20px; padding: 8px 12px; outline: none; font-size: 14px; box-sizing: border-box; }
 .chat-input-area button { flex-shrink: 0; white-space: nowrap; padding: 8px 14px; }
+/* Attach button */
+#attach-btn {
+  background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 6px;
+  color: #666; flex-shrink: 0; border-radius: 50%;
+  transition: background 0.1s;
+}
+#attach-btn:hover { background: #f0f0f5; color: var(--accent); }
+/* Attachment preview area */
+#attach-preview-bar {
+  display: none; flex-wrap: wrap; gap: 6px; padding: 4px 2px;
+}
+.pending-attach {
+  display: flex; align-items: center; gap: 4px; background: #f0f0f5;
+  border-radius: 8px; padding: 4px 8px; font-size: 12px; max-width: 200px;
+}
+.pending-attach .pa-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+.pending-attach .pa-remove { cursor: pointer; color: var(--danger); font-weight: bold; flex-shrink: 0; }
 /* ─── MODAL FIELDS ─── */
 .modal-field-container { margin: 15px 0; text-align: left; }
 .modal-field-container label { font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; margin-left: 5px; }
@@ -239,6 +339,14 @@ button { border: none; color: white; padding: 8px 16px; border-radius: 18px; fon
   padding: 15px; font-weight: bold; border-bottom: 1px solid #ddd;
   display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
 }
+/* ─── LINK PREVIEW ─── */
+.link-preview {
+  margin-top: 6px; background: rgba(255,255,255,0.15); border-radius: 10px;
+  padding: 8px 10px; border-left: 3px solid rgba(255,255,255,0.4);
+  text-decoration: none; display: block; color: white;
+}
+.link-preview .lp-title { font-weight: 600; font-size: 13px; }
+.link-preview .lp-url { font-size: 11px; opacity: 0.7; word-break: break-all; }
 </style>
 </head>
 <body>
@@ -282,8 +390,8 @@ button { border: none; color: white; padding: 8px 16px; border-radius: 18px; fon
 </div>
 
 <span id="chat-notif-dot" style="display:none;"></span>
-
 <div id="toast"></div>
+<input type="file" id="file-input" multiple style="display:none;" accept="*/*">
 
 <div id="main-stage">
   <div id="empty-state">
@@ -304,7 +412,7 @@ button { border: none; color: white; padding: 8px 16px; border-radius: 18px; fon
   <button id="btn-screen" class="btn-blue" onclick="toggleScreen()">Share Screen</button>
   <button class="btn-blue" onclick="showInviteModal()">Invite</button>
   <div id="pip-btn-wrapper">
-    <button class="btn-purple" onclick="openMiniplayer()" title="Pop-out miniplayer">⧉ Mini</button>
+    <button class="btn-blue" onclick="openMiniplayer()" title="Pop-out miniplayer" style="padding:5px 10px;font-size:0.71rem;">⧉ Mini</button>
     <span id="pip-badge"></span>
   </div>
   <button class="btn-red" onclick="showEndModal()">End</button>
@@ -319,7 +427,7 @@ button { border: none; color: white; padding: 8px 16px; border-radius: 18px; fon
   <button id="vbtn-video" class="vt-btn btn-gray" onclick="toggleVideo()">Stop<br>Vid</button>
   <button id="vbtn-screen" class="vt-btn btn-blue" onclick="toggleScreen()">Scrn</button>
   <button class="vt-btn btn-blue" onclick="showInviteModal()">Inv&shy;ite</button>
-  <button class="vt-btn btn-purple" onclick="openMiniplayer()">⧉</button>
+  <button class="vt-btn btn-blue" onclick="openMiniplayer()">⧉</button>
   <button class="vt-btn btn-blue" onclick="toggleChat(true)">Chat</button>
   <button class="vt-btn btn-red" onclick="showEndModal()">End</button>
 </div>
@@ -334,8 +442,12 @@ button { border: none; color: white; padding: 8px 16px; border-radius: 18px; fon
   </div>
   <div id="messages"></div>
   <div class="chat-input-area">
-    <input type="text" id="chat-msg" placeholder="Message…">
-    <button class="btn-blue" onclick="sendChatMessage()">Send</button>
+    <div id="attach-preview-bar"></div>
+    <div class="chat-input-row">
+      <button id="attach-btn" onclick="document.getElementById('file-input').click()" title="Attach file">⯎</button>
+      <input type="text" id="chat-msg" placeholder="Message…">
+      <button class="btn-blue" onclick="sendChatMessage()">Send</button>
+    </div>
   </div>
 </div>
 
@@ -370,7 +482,21 @@ function showToast(msg, duration=2200) {
   setTimeout(() => t.classList.remove('show'), duration);
 }
 
-/* ── CHECK URL HASH (join link) ── */
+/* ── NOTIFICATIONS ── */
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+function sendBrowserNotif(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+    const n = new Notification(title, { body, tag: 'zxy-chat', icon: '' });
+    setTimeout(() => n.close(), 5000);
+    n.onclick = () => { window.focus(); n.close(); };
+  }
+}
+
+/* ── CHECK URL HASH ── */
 function checkHashAndMaybeJoin() {
   const hash = window.location.hash.replace('#', '').trim();
   if (!hash || hash === myId) return;
@@ -409,6 +535,7 @@ peer.on('open', id => {
   msg.title = 'Click to copy your ID';
   msg.addEventListener('click', () => copyMyId());
   document.getElementById('messages').appendChild(msg);
+  requestNotifPermission();
   const hash = window.location.hash.replace('#', '').trim();
   if (hash && hash !== id) {
     const banner = document.getElementById('join-banner');
@@ -501,22 +628,54 @@ function handleCall(call) {
   });
   call.on('error', () => { delete calls[call.peer]; updateEmptyState(); });
 }
+
+/* ── CHAT SETUP ── */
 function setupChat(conn) {
   connections[conn.peer] = conn;
   getPeerColor(conn.peer);
   conn.on('data', data => {
     if (data.type === 'chat') {
-      appendMessage(data.text, 'them', conn.peer);
-      sendBrowserNotif(`New message from ${conn.peer.substring(0,8)}…`, data.text);
-      showChatNotifDot();
+      const msgId = appendMessage(data.text, 'them', conn.peer, data.attachments || []);
+      // Store msg ID for remote edits/deletes
+      if (data.msgId) { remoteToLocalId[data.msgId] = msgId; localToRemoteId[msgId] = data.msgId; }
+      const notifBody = data.text || (data.attachments && data.attachments.length ? `⯎ ${data.attachments[0].name}` : 'New message');
+      sendBrowserNotif(`Message from ${conn.peer.substring(0,8)}…`, notifBody);
+      showChatNotifDot(notifBody);
     }
     if (data.type === 'react') {
-      const r = document.getElementById('re-' + data.id);
-      if (r) r.innerText = data.emoji; showBigReaction(data.emoji);
+      // Use remote msgId to find local element
+      const localId = remoteToLocalId[data.msgId] || data.msgId;
+      const r = document.getElementById('re-' + localId);
+      if (r) { r.textContent = data.emoji; showBigReaction(data.emoji); }
+      // Notify if not focused
+      if (data.emoji) { sendBrowserNotif(`Reaction from ${conn.peer.substring(0,8)}…`, data.emoji); }
+    }
+    if (data.type === 'edit') {
+      const localId = remoteToLocalId[data.msgId] || data.msgId;
+      const bubble = document.getElementById(localId);
+      if (bubble) {
+        const textSpan = bubble.querySelector('.bubble-text');
+        if (textSpan) textSpan.textContent = data.newText;
+        const edited = bubble.closest('.msg-wrapper')?.querySelector('.edited-label');
+        if (edited) edited.style.display = 'inline';
+      }
+    }
+    if (data.type === 'delete') {
+      const localId = remoteToLocalId[data.msgId] || data.msgId;
+      const bubble = document.getElementById(localId);
+      if (bubble) {
+        const wrapper = bubble.closest('.msg-wrapper');
+        if (wrapper) wrapper.remove();
+      }
     }
   });
   conn.on('close', () => { delete connections[conn.peer]; });
 }
+
+// Maps remote msg IDs to local IDs and vice versa
+const remoteToLocalId = {};
+const localToRemoteId = {};
+
 function updateEmptyState() {
   const hasVideos = Object.keys(peerVideoSlots).some(id => { const s = peerVideoSlots[id]; return s && s.isConnected; });
   document.getElementById('empty-state').style.display = hasVideos ? 'none' : 'flex';
@@ -528,56 +687,242 @@ function addSysMsg(text) {
   document.getElementById('messages').scrollTop = 99999;
 }
 
-/* ── MESSAGES ── */
-function appendMessage(text, side, peerId) {
+/* ── PENDING ATTACHMENTS ── */
+let pendingAttachments = []; // {name, size, type, dataUrl}
+
+document.getElementById('file-input').addEventListener('change', function() {
+  const files = Array.from(this.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingAttachments.push({ name: file.name, size: file.size, type: file.type, dataUrl: e.target.result });
+      renderAttachPreviewBar();
+    };
+    reader.readAsDataURL(file);
+  });
+  this.value = '';
+});
+
+function renderAttachPreviewBar() {
+  const bar = document.getElementById('attach-preview-bar');
+  if (pendingAttachments.length === 0) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = pendingAttachments.map((a, i) => `
+    <div class="pending-attach">
+      <span class="pa-name" title="${a.name}">${fileIcon(a.type)} ${a.name}</span>
+      <span class="pa-remove" onclick="removePendingAttach(${i})">✕</span>
+    </div>
+  `).join('');
+}
+function removePendingAttach(i) {
+  pendingAttachments.splice(i, 1);
+  renderAttachPreviewBar();
+}
+function fileIcon(type) {
+  if (type.startsWith('image/')) return '🖼️';
+  if (type.startsWith('video/')) return '🎬';
+  if (type.startsWith('audio/')) return '🎵';
+  if (type.includes('pdf')) return '📄';
+  return '📁';
+}
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+/* ── LINK DETECTION ── */
+const URL_REGEX = /(\bhttps?:\/\/[^\s<>"']+)/gi;
+function extractLinks(text) { return text.match(URL_REGEX) || []; }
+function linkifyText(text) {
+  return text.replace(URL_REGEX, url => `<a href="${url}" target="_blank" rel="noopener" style="color:rgba(255,255,255,0.9);text-decoration:underline;">${url}</a>`);
+}
+
+/* ── APPEND MESSAGE ── */
+function appendMessage(text, side, peerId, attachments=[]) {
   const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2,5);
   const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  const bubbleColor = (side === 'me') ? MY_COLOR : (peerId ? getPeerColor(peerId) : '#8e8e93');
+
+  const EMOJIS = ['😭','⏰','📚','🌐','📆','🤔','😈','😂','👏','🖐','🎉','💧','🔮','😀','😆','👋','🧻','🔥','✨','🚀','💯','❤️','👍','👎','😱','🎯'];
+
   const wrapper = document.createElement('div');
   wrapper.className = `msg-wrapper ${side}`;
-  const bubbleColor = (side === 'me') ? MY_COLOR : (peerId ? getPeerColor(peerId) : '#8e8e93');
-  const emojiList = ['😭','⏰','📚','🌐','📆','🤔','😈','😂','👏','🖐','🎉','💧','🔮','😀','😆','👋','🧻','🔥','✨','🚀','💯'];
-  const emojiButtons = emojiList.map(e => `<button class="action-btn" data-emoji="${e}">${e}</button>`).join('');
+  wrapper.dataset.msgId = msgId;
+
+  // Build attachment HTML
+  let attachHTML = '';
+  if (attachments && attachments.length) {
+    attachments.forEach(a => {
+      if (a.type && a.type.startsWith('image/')) {
+        attachHTML += `<div class="attach-preview"><img src="${a.dataUrl}" alt="${a.name}" onclick="window.open('${a.dataUrl}')"></div>`;
+      } else if (a.type && a.type.startsWith('video/')) {
+        attachHTML += `<div class="attach-preview"><video src="${a.dataUrl}" controls></video></div>`;
+      } else if (a.type && a.type.startsWith('audio/')) {
+        attachHTML += `<div class="attach-preview"><audio src="${a.dataUrl}" controls></audio></div>`;
+      } else {
+        const ext = a.name.split('.').pop().toUpperCase();
+        attachHTML += `<div class="attach-preview"><a class="attach-file-link" href="${a.dataUrl}" download="${a.name}"><span class="file-icon">${fileIcon(a.type)}</span><span class="file-info"><span class="file-name">${a.name}</span><span class="file-size">${ext} · ${formatBytes(a.size)}</span></span></a></div>`;
+      }
+    });
+  }
+
+  // Link preview for URLs
+  const links = extractLinks(text);
+  let linkPreviewHTML = '';
+  if (links.length) {
+    links.forEach(url => {
+      linkPreviewHTML += `<a class="link-preview" href="${url}" target="_blank" rel="noopener"><div class="lp-title">🔗 External Link</div><div class="lp-url">${url}</div></a>`;
+    });
+  }
+
+  const displayText = text ? linkifyText(text) : '';
+
   wrapper.innerHTML = `
-    <div class="bubble-container">
-      <div class="msg-bubble" id="${msgId}" style="background:${bubbleColor};">${text}</div>
-      <div class="msg-actions" data-msgid="${msgId}">
-        <span class="emoji-trigger" title="React">😊</span>
-        <div class="emoji-tray">${emojiButtons}</div>
-        <div class="util-btns"><button class="action-btn" title="Copy">❐</button></div>
+    <div class="bubble-row">
+      <div class="msg-bubble" id="${msgId}" style="background:${bubbleColor};">
+        <span class="bubble-text">${displayText}</span>
+        ${attachHTML}
+        ${linkPreviewHTML}
+      </div>
+      <div class="msg-actions">
+        <div class="action-icon-btn" title="React" data-action="react">😊</div>
+        ${side === 'me' ? `<div class="action-icon-btn" title="Edit" data-action="edit">✏️</div>` : ''}
+        ${side === 'me' ? `<div class="action-icon-btn" title="Delete" data-action="delete">🗑️</div>` : ''}
+        <div class="action-icon-btn" title="Copy" data-action="copy">❐</div>
       </div>
     </div>
-    <div class="msg-meta"><span>${time}</span> <span id="re-${msgId}" class="reaction-badge"></span></div>
+    <div class="msg-meta">
+      <span>${time}</span>
+      <span id="re-${msgId}" class="reaction-badge"></span>
+      <span class="edited-label" style="display:none;">(edited)</span>
+    </div>
+    <div class="emoji-picker-popup" id="ep-${msgId}">
+      ${EMOJIS.map(e => `<span class="ep-emoji" data-emoji="${e}">${e}</span>`).join('')}
+    </div>
+    <div class="edit-popup" id="editpop-${msgId}">
+      <input type="text" id="edit-input-${msgId}" placeholder="Edit message…">
+      <button class="btn-blue" style="font-size:11px;padding:4px 8px;" onclick="confirmEdit('${msgId}')">Save</button>
+      <button class="btn-gray" style="font-size:11px;padding:4px 8px;" onclick="closeEditPop('${msgId}')">✕</button>
+    </div>
   `;
-  const msgActionsEl = wrapper.querySelector('.msg-actions');
-  const tray = wrapper.querySelector('.emoji-tray');
-  const trigger = wrapper.querySelector('.emoji-trigger');
-  const copyBtn = wrapper.querySelector('.util-btns .action-btn');
-  trigger.addEventListener('click', () => reactTo(msgId, '😊'));
-  msgActionsEl.addEventListener('mouseenter', () => { clearTimeout(collapseTimer); openEmojiTray(tray); });
-  msgActionsEl.addEventListener('mouseleave', () => scheduleClose(tray));
-  tray.addEventListener('mouseenter', () => clearTimeout(collapseTimer));
-  tray.addEventListener('mouseleave', () => scheduleClose(tray));
-  tray.querySelectorAll('.action-btn').forEach(btn => {
-    btn.addEventListener('click', () => { reactTo(msgId, btn.dataset.emoji); closeEmojiTray(tray); });
+
+  // Action button handlers
+  const actionsEl = wrapper.querySelector('.msg-actions');
+  actionsEl.querySelectorAll('.action-icon-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const action = btn.dataset.action;
+      const ep = document.getElementById('ep-' + msgId);
+      const editPop = document.getElementById('editpop-' + msgId);
+      if (action === 'react') {
+        closeAllPopups(msgId);
+        ep.classList.toggle('open');
+      } else if (action === 'edit') {
+        closeAllPopups(msgId);
+        const current = wrapper.querySelector('.bubble-text').textContent;
+        document.getElementById('edit-input-' + msgId).value = current;
+        editPop.classList.add('open');
+        document.getElementById('edit-input-' + msgId).focus();
+      } else if (action === 'delete') {
+        if (confirm('Delete this message?')) deleteMsg(msgId);
+      } else if (action === 'copy') {
+        const bubbleTextEl = wrapper.querySelector('.bubble-text');
+        navigator.clipboard.writeText(bubbleTextEl ? bubbleTextEl.textContent : '').then(() => showToast('Copied!'));
+      }
+    });
   });
-  copyBtn.addEventListener('click', () => navigator.clipboard.writeText(document.getElementById(msgId).innerText));
+
+  // Emoji picker selection
+  const ep = wrapper.querySelector('.emoji-picker-popup');
+  ep.querySelectorAll('.ep-emoji').forEach(span => {
+    span.addEventListener('click', e => {
+      e.stopPropagation();
+      reactTo(msgId, span.dataset.emoji, side);
+      ep.classList.remove('open');
+    });
+  });
+
+  // Edit input enter key
+  const editInput = wrapper.querySelector('.edit-popup input');
+  if (editInput) editInput.addEventListener('keydown', e => { if (e.key === 'Enter') confirmEdit(msgId); if (e.key === 'Escape') closeEditPop(msgId); });
+
   document.getElementById('messages').appendChild(wrapper);
   document.getElementById('messages').scrollTop = 99999;
   return msgId;
 }
-function reactTo(id, emoji) {
-  const el = document.getElementById('re-' + id);
-  if (el) {
-    el.innerText = emoji; showBigReaction(emoji);
-    Object.values(connections).forEach(c => { try { c.send({ type: 'react', id, emoji }); } catch(e){} });
+
+/* ── POPUP MANAGEMENT ── */
+function closeAllPopups(exceptMsgId) {
+  document.querySelectorAll('.emoji-picker-popup.open, .edit-popup.open').forEach(el => {
+    if (!exceptMsgId || !el.id.includes(exceptMsgId)) el.classList.remove('open');
+  });
+}
+document.addEventListener('click', () => closeAllPopups(null));
+
+/* ── REACT ── */
+function reactTo(msgId, emoji, side) {
+  const r = document.getElementById('re-' + msgId);
+  if (r) {
+    r.textContent = emoji; showBigReaction(emoji);
+    // Broadcast to peers
+    const remoteId = localToRemoteId[msgId] || msgId;
+    Object.values(connections).forEach(c => {
+      try { c.send({ type: 'react', msgId: remoteId, emoji }); } catch(e){}
+    });
   }
 }
+
+/* ── EDIT ── */
+function confirmEdit(msgId) {
+  const input = document.getElementById('edit-input-' + msgId);
+  if (!input) return;
+  const newText = input.value.trim();
+  if (!newText) return;
+  const wrapper = document.querySelector(`[data-msg-id="${msgId}"]`);
+  if (!wrapper) return;
+  const textSpan = wrapper.querySelector('.bubble-text');
+  if (textSpan) textSpan.innerHTML = linkifyText(newText);
+  const edited = wrapper.querySelector('.edited-label');
+  if (edited) edited.style.display = 'inline';
+  closeEditPop(msgId);
+  // Broadcast
+  const remoteId = localToRemoteId[msgId] || msgId;
+  Object.values(connections).forEach(c => {
+    try { c.send({ type: 'edit', msgId: remoteId, newText }); } catch(e){}
+  });
+}
+function closeEditPop(msgId) {
+  const ep = document.getElementById('editpop-' + msgId);
+  if (ep) ep.classList.remove('open');
+}
+
+/* ── DELETE ── */
+function deleteMsg(msgId) {
+  const wrapper = document.querySelector(`[data-msg-id="${msgId}"]`);
+  if (wrapper) wrapper.remove();
+  // Broadcast
+  const remoteId = localToRemoteId[msgId] || msgId;
+  Object.values(connections).forEach(c => {
+    try { c.send({ type: 'delete', msgId: remoteId }); } catch(e){}
+  });
+}
+
+/* ── SEND MESSAGE ── */
 function sendChatMessage() {
   const text = document.getElementById('chat-msg').value.trim();
-  if (!text) return;
-  Object.values(connections).forEach(c => { try { c.send({ type: 'chat', text }); } catch(e){} });
-  appendMessage(text, 'me', null);
+  const attachs = [...pendingAttachments];
+  if (!text && attachs.length === 0) return;
+
+  const msgId = appendMessage(text, 'me', null, attachs);
+  // Send to all peers
+  Object.values(connections).forEach(c => {
+    try { c.send({ type: 'chat', text, msgId, attachments: attachs }); } catch(e){}
+  });
+  // Clear
   document.getElementById('chat-msg').value = '';
+  pendingAttachments = [];
+  renderAttachPreviewBar();
 }
 
 /* ── DRAG (local video) ── */
@@ -670,26 +1015,6 @@ function adjustLocalBoxBoundary() {
   if (currentX > maxX) { currentX = Math.max(0, maxX); xOffset = currentX; localBox.style.transform = `translate3d(${currentX}px,${currentY}px,0)`; }
 }
 
-/* ── EMOJI TRAY ── */
-let openTray = null, collapseTimer = null;
-function openEmojiTray(tray) {
-  if (openTray && openTray !== tray) closeEmojiTray(openTray);
-  clearTimeout(collapseTimer); openTray = tray; tray.classList.add('open');
-  const needed = 900;
-  if (sidebar.offsetWidth < needed) {
-    const cap = Math.min(needed, window.innerWidth * 0.92);
-    sidebar.classList.add('smooth-width'); sidebar.style.width = cap + 'px';
-    document.documentElement.style.setProperty('--sidebar-width', cap + 'px');
-  }
-}
-function scheduleClose(tray) { clearTimeout(collapseTimer); collapseTimer = setTimeout(() => closeEmojiTray(tray), 300); }
-function closeEmojiTray(tray) {
-  if (!tray) return; tray.classList.remove('open');
-  if (openTray === tray) openTray = null;
-  sidebar.classList.add('smooth-width'); sidebar.style.width = baseSidebarWidth + 'px';
-  document.documentElement.style.setProperty('--sidebar-width', baseSidebarWidth + 'px');
-}
-
 /* ── BIG REACTION ── */
 function showBigReaction(emoji) {
   const el = document.createElement('div'); el.className = 'big-reaction-popup'; el.textContent = emoji;
@@ -773,12 +1098,13 @@ function openMiniplayer() {
   miniplayerWin.document.close();
   setTimeout(() => syncMiniplayerStreams(), 300);
   miniplayerInterval = setInterval(() => {
-    if (!miniplayerWin || miniplayerWin.closed) { clearInterval(miniplayerInterval); return; }
+    if (!miniplayerWin || miniplayerWin.closed) { clearInterval(miniplayerInterval); document.getElementById('pip-badge').style.display = 'none'; return; }
     syncMiniplayerStreams();
   }, 1500);
   document.getElementById('pip-badge').style.display = 'block';
   showToast('📺 Miniplayer opened in corner!');
 }
+
 function syncMiniplayerStreams() {
   if (!miniplayerWin || miniplayerWin.closed) return;
   const grid = miniplayerWin.document.getElementById('mini-grid');
@@ -808,16 +1134,31 @@ function syncMiniplayerStreams() {
   });
 }
 
-/* ── BROWSER NOTIFICATIONS ── */
-function sendBrowserNotif(title, body) {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    const n = new Notification(title, { body, tag: 'zxy-chat' });
-    setTimeout(() => n.close(), 5000);
+/* ── AUTO MINIPLAYER ON TAB SWITCH ── */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // Tab/window switched away — open miniplayer if there are active calls
+    if (Object.keys(calls).length > 0 || myStream) {
+      openMiniplayer();
+    }
+  } else {
+    // Returned to call tab — close miniplayer
+    if (miniplayerWin && !miniplayerWin.closed) {
+      miniplayerWin.close();
+      miniplayerWin = null;
+      clearInterval(miniplayerInterval);
+      document.getElementById('pip-badge').style.display = 'none';
+    }
   }
-}
-function showChatNotifDot() {
+});
+
+/* ── NOTIFICATION DOT ── */
+function showChatNotifDot(msgPreview) {
   const isChatVisible = !sidebar.classList.contains('hidden');
-  if (!isChatVisible) { document.getElementById('chat-notif-dot').style.display = 'inline-block'; }
+  if (!isChatVisible) {
+    document.getElementById('chat-notif-dot').style.display = 'inline-block';
+    showToast(`💬 ${msgPreview || 'New message'}`, 3000);
+  }
 }
 function clearChatNotifDot() { document.getElementById('chat-notif-dot').style.display = 'none'; }
 
