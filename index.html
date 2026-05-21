@@ -638,7 +638,7 @@ function setupChat(conn) {
       const msgId = appendMessage(data.text, 'them', conn.peer, data.attachments || []);
       // Store msg ID for remote edits/deletes
       if (data.msgId) { remoteToLocalId[data.msgId] = msgId; localToRemoteId[msgId] = data.msgId; }
-      const notifBody = data.text || (data.attachments && data.attachments.length ? `📎 ${data.attachments[0].name}` : 'New message');
+      const notifBody = data.text || (data.attachments && data.attachments.length ? `⯎ ${data.attachments[0].name}` : 'New message');
       sendBrowserNotif(`Message from ${conn.peer.substring(0,8)}…`, notifBody);
       showChatNotifDot(notifBody);
     }
