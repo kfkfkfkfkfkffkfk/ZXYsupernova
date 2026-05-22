@@ -534,7 +534,7 @@ button { border: none; color: white; padding: 8px 16px; border-radius: 18px; fon
   <div class="chat-input-area">
     <div class="chat-input-row">
       <button id="attach-btn" title="Attach file" onclick="triggerFileAttach()">⯎</button>
-      <button id="link-btn" title="Highlight text then click to link it" onclick="handleLinkBtn()">🔗</button>
+      <button id="link-btn" title="Highlight text then click to link it" onclick="handleLinkBtn()">∝</button>
       <input type="file" id="file-input" multiple accept="*/*" onchange="handleFileAttach(event)">
       <input type="text" id="chat-msg" placeholder="Type a message…">
       <button class="btn-blue" onclick="sendChatMessage()">Send</button>
@@ -1024,7 +1024,7 @@ function addSysMsg(text) {
 
 /* ════════════════════════════════════════════
    INLINE LINK SYSTEM (Google Docs style)
-   - Highlight text in the input, click 🔗
+   - Highlight text in the input, click ∝
    - A modal asks for the URL
    - The highlighted text becomes the link text
    - In the bubble it renders as a styled <a> tag
@@ -1042,7 +1042,7 @@ function handleLinkBtn() {
   const selected = input.value.substring(start, end).trim();
 
   if (!selected) {
-    showToast('Highlight some text first, then click 🔗');
+    showToast('Highlight some text first, then click ∝');
     return;
   }
 
